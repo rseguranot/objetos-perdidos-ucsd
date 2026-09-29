@@ -13,7 +13,7 @@ Esta sección es la referencia actual. Las revisiones históricas siguientes doc
 | Email/Password | Proveedor habilitado sin facturación; no se creó usuario institucional contraseña ni vínculo/reset automático |
 | QA aislado | Proyecto `ucsd-objetos-perdidos-pruebas`, Spark sin facturación, Hosting publicado y carga inicial de 37 ejemplos ficticios con 30 públicos |
 | Acceso QA en navegador | Login por contraseña y logout comprobados para Registro, Decanato y Administrador; Registro ve solo sus objetos y no Roles, Decanato ve tabla completa, Administrador ve tres accesos activos con roles fijos; catálogo final de 28 públicos comprobado |
-| Pruebas automatizadas | **53 de 53 aprobadas**, incluidas tres del codec Firestore y dos de reconocimiento de commit |
+| Pruebas automatizadas | **57 de 57 aprobadas**, incluidas cuatro de campus, tres del codec Firestore y dos de reconocimiento de commit |
 | Tipos y análisis estático | Aprobados |
 | Compilaciones | Demo, piloto Firebase y QA aprobadas |
 | Circuito SDK QA | **Aprobado completo**, ejecución final con objeto ficticio `2979320c-f8b3-49e2-8605-aa73ab5f93f8`; transiciones, proyección pública, entrega, archivo, revocación y denegaciones descritas abajo |
@@ -21,6 +21,7 @@ Esta sección es la referencia actual. Las revisiones históricas siguientes doc
 | Publicación final | Hosting con codec, 19 archivos por proyecto, y reglas finales publicados en piloto y QA |
 | Parche posterior de reintento | Compilado, revisado y republicado en ambos Hosting, 19 archivos cada uno; nueva donación E2E UI aprobada, sin forzar otra pérdida de respuesta |
 | Anónimo institucional con reglas finales | Cinco comprobaciones aprobadas, 0 públicos; facturación deshabilitada verificada en ambos proyectos |
+| Campus y Roles compacto | Publicados y comprobados; filtros, guardado/recarga/edición, archivo con historial y Roles del piloto con Developer aprobados; QA 60 privados/28 públicos |
 
 El circuito autenticado de objetos se probó mediante SDK contra el backend real QA. En navegador se verificaron por separado las sesiones y vistas de los tres roles. El piloto institucional tiene login Google y Roles protegido comprobados; no se declara el circuito completo de objetos probado con esa identidad institucional. Los resultados de QA pertenecen exclusivamente a su proyecto separado.
 
@@ -68,7 +69,17 @@ Las reglas no cambiaron y mantienen sus hashes comprobados. El resultado SDK amp
 
 Una nueva donación UI con Decanato, objeto ficticio `e8a80958-af71-4ba2-ae14-d3922b174044` recibido el 21/06, completó el formulario: el diálogo cerró sin error, la tabla mostró Donado y el historial conservó creación más exactamente un evento de donación. La fecha autoritativa mostrada fue 29/09/2026 8:05:55 a. m. La nueva operación no reprodujo el error de conexión; el log anterior pertenecía al intento previo. No se forzó otra pérdida de respuesta y no se declara E2E de recuperación inducida; el reconocimiento idempotente está cubierto por pruebas de lógica y revisión. Captura: `evidence/qa-donacion-servidor-ui.png`, excluida de Git.
 
-Al cierre QA mostró 59 registros, 28 públicos, seis donados, tres remitidos y cero pendientes de revisión. Son totales del conjunto cargado después de ensayos ficticios, distintos de la semilla de 37/30. La mochila del intento `417eaed3` quedó donada por su commit persistido; no se describe como archivo común.
+Al cierre de la revisión de donaciones, QA mostró 59 registros, 28 públicos, seis donados, tres remitidos y cero pendientes de revisión. Son totales de aquella carga después de ensayos ficticios, distintos de la semilla de 37/30; la comprobación posterior de campus dejó 60 privados y 28 públicos. La mochila del intento `417eaed3` quedó donada por su commit persistido; no se describe como archivo común.
+
+## Campus y Roles compacto · 29 de septiembre
+
+La fuente final aprobó **57/57 pruebas**, lint y las tres compilaciones con tipos; `git diff --check` quedó limpio. Las cuatro pruebas nuevas cubren ubicaciones del campus. Se publicó en ambos Hosting y HTML/assets recuperados por HTTP coincidieron con las compilaciones locales. Es un cambio de presentación y texto `foundLocation`: no cambia esquema ni reglas, por lo que no se declara una nueva prueba completa de reglas backend.
+
+El SDK Firestore actualizó 30 ejemplos QA editables, preservando los siete cerrados e historial y proyección pública; el piloto sigue sin objetos. En navegador, EAL + búsqueda «EAL 206» devolvió dos resultados públicos y los mismos dos en administración. El formulario creó el borrador ficticio «Estuche · prueba edificio y aula» con `Edificio La Altagracia (EAL) · Aula 206`. Recarga y edición recuperaron «Aula 206» exacto. Se archivó el registro de prueba conservando historial: QA quedó con 60 privados y 28 públicos.
+
+Roles del piloto, con Developer real, mostró formulario y tabla sin introducción, avisos técnicos ni tarjetas de explicación. El DOM a ancho 390 no desbordó horizontalmente (`documentWidth <= 390`) y se retiró la emulación. La captura móvil del navegador integrado está escalada: se conserva como evidencia complementaria, sin declararla aprobación visual completa ni prueba en un teléfono físico.
+
+Capturas locales, excluidas de Git: `evidence/roles-compacto-publicado.png`, `evidence/campus-filtro-eal.png` y `evidence/campus-movil.png`. Las fuentes y variaciones de nombres están en [campus y ubicaciones](campus-y-ubicaciones.md).
 
 ## Pendientes actuales
 
@@ -80,7 +91,7 @@ No quedan pendientes el primer ingreso Google, el UID institucional, el alta Dev
 
 ## Evidencia histórica local · 28 y 29 de septiembre
 
-Entorno de las revisiones locales: Windows, Node 26.6.0 y npm 11.18.0. Objetos, receptores y constancias fueron ficticios. Las revisiones previas de 36/39/48 pruebas fueron sustituidas por el resultado vigente de 53; los recorridos siguientes corresponden a localStorage e identidades simuladas.
+Entorno de las revisiones locales: Windows, Node 26.6.0 y npm 11.18.0. Objetos, receptores y constancias fueron ficticios. Las revisiones previas de 36/39/48/51/53 pruebas fueron sustituidas por el resultado vigente de 57; los recorridos siguientes corresponden a localStorage e identidades simuladas.
 
 ### Catálogo, filtros y preservación
 

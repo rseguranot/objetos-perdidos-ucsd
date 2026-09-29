@@ -26,7 +26,8 @@ import SearchRounded from '@mui/icons-material/SearchRounded'
 import InputAdornment from '@mui/material/InputAdornment'
 import CategoryIcon from './CategoryIcon'
 import DateRangeFilter from './DateRangeFilter'
-import { archiveItem, canDispose, CATEGORY_LABELS, createItem, deliverItem, disposeItem, filterInternalItems, LOCATIONS, publishItem, retentionInfo, STATUS_LABELS, TYPE_LABELS, typesForCategory, updateItem } from '../domain/catalog'
+import { CAMPUS_NAMES, LEGACY_LOCATION, joinFoundLocation, splitFoundLocation } from '../domain/campus'
+import { archiveItem, canDispose, CATEGORY_LABELS, createItem, deliverItem, disposeItem, filterInternalItems, publishItem, retentionInfo, STATUS_LABELS, TYPE_LABELS, typesForCategory, updateItem } from '../domain/catalog'
 import type { Category, DeliveryInput, IdentityType, ItemDraft, ItemType, LostItem } from '../domain/types'
 import { canEdit, canReceive, ROLE_LABELS, type Session } from '../domain/roles'
 import { todayISO } from '../date'
@@ -35,21 +36,23 @@ type Commit = (next: LostItem[], message: string) => Promise<void>
 const statusColors = { borrador: 'default', disponible: 'success', entregado: 'info', archivado: 'default' } as const
 
 function ItemForm({ item, items, session, demo, onCommit, onClose }: { item: LostItem | null; items: LostItem[]; session: Session; demo: boolean; onCommit: Commit; onClose: () => void }) {
-  const [draft, setDraft] = useState<ItemDraft>(item ? { title: item.title, category: item.category, itemType: item.itemType, description: item.description, foundDate: item.foundDate, foundLocation: item.foundLocation, received: item.received, receivedDate: item.receivedDate, custodyLocation: item.custodyLocation, privateDetails: item.privateDetails } : { title: '', category: 'electronica', itemType: 'otro', description: '', foundDate: todayISO(), foundLocation: 'Biblioteca', received: false, receivedDate: '', custodyLocation: '', privateDetails: '' })
+  const [draft, setDraft] = useState<ItemDraft>(item ? { title: item.title, category: item.category, itemType: item.itemType, description: item.description, foundDate: item.foundDate, foundLocation: item.foundLocation, received: item.received, receivedDate: item.receivedDate, custodyLocation: item.custodyLocation, privateDetails: item.privateDetails } : { title: '', category: 'electronica', itemType: 'otro', description: '', foundDate: todayISO(), foundLocation: '', received: false, receivedDate: '', custodyLocation: '', privateDetails: '' })
+  const [place, setPlace] = useState(() => item ? splitFoundLocation(item.foundLocation) : { building: '', detail: '' })
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const receiveAllowed = canReceive(session)
   function field<K extends keyof ItemDraft>(key: K, value: ItemDraft[K]) { setDraft(previous => ({ ...previous, [key]: value })) }
   async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    try { setSaving(true); const saved = item ? updateItem(item, draft, session.email) : createItem(items, draft, session.email); await onCommit(item ? items.map(current => current.id === item.id ? saved : current) : [...items, saved], item ? 'Registro actualizado.' : 'Borrador creado.'); onClose() } catch (cause) { setError(cause instanceof Error ? cause.message : 'No se pudo guardar el registro.') } finally { setSaving(false) }
+    try { setSaving(true); const locatedDraft = { ...draft, foundLocation: item && place.building === splitFoundLocation(item.foundLocation).building && place.detail === splitFoundLocation(item.foundLocation).detail ? draft.foundLocation : joinFoundLocation(place.building, place.detail) }; const saved = item ? updateItem(item, locatedDraft, session.email) : createItem(items, locatedDraft, session.email); await onCommit(item ? items.map(current => current.id === item.id ? saved : current) : [...items, saved], item ? 'Registro actualizado.' : 'Borrador creado.'); onClose() } catch (cause) { setError(cause instanceof Error ? cause.message : 'No se pudo guardar el registro.') } finally { setSaving(false) }
   }
   return <Dialog open onClose={() => !saving && onClose()} fullWidth maxWidth="sm" aria-labelledby="item-form-title"><form onSubmit={event => { void save(event) }}><DialogTitle id="item-form-title">{item ? 'Editar registro' : 'Registrar un objeto'}</DialogTitle><DialogContent><Alert severity="info" className="form-alert">{demo ? 'Usa únicamente datos ficticios. ' : ''}Los nuevos objetos se guardan como borrador. {receiveAllowed ? 'Confirma recepción, fecha y custodia antes de publicar.' : 'El decanato confirmará su recepción y custodia.'}</Alert>{error && <Alert severity="error" className="form-alert">{error}</Alert>}<fieldset className="form-fieldset" disabled={saving}><div className="form-grid">
     <TextField required label="Nombre del objeto" value={draft.title} onChange={e => field('title', e.target.value)} className="form-full" slotProps={{ htmlInput: { maxLength: 100 } }} />
     <TextField select label="Categoría" value={draft.category} onChange={e => { const category = e.target.value as Category; setDraft(previous => ({ ...previous, category, itemType: typesForCategory(category).includes(previous.itemType) ? previous.itemType : 'otro' })) }}>{Object.entries(CATEGORY_LABELS).map(([key, label]) => <MenuItem key={key} value={key}>{label}</MenuItem>)}</TextField>
     <TextField select label="Tipo de objeto" value={draft.itemType} onChange={e => field('itemType', e.target.value as ItemType)}>{typesForCategory(draft.category).map(type => <MenuItem key={type} value={type}>{TYPE_LABELS[type]}</MenuItem>)}</TextField>
     <TextField required label="Fecha del hallazgo" type="date" value={draft.foundDate} onChange={e => field('foundDate', e.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
-    <TextField select label="Zona del hallazgo" value={draft.foundLocation} onChange={e => field('foundLocation', e.target.value)} className="form-full">{LOCATIONS.map(zone => <MenuItem key={zone} value={zone}>{zone}</MenuItem>)}</TextField>
+    <TextField required select label="Edificio o lugar" value={place.building} onChange={e => setPlace(previous => ({ building: e.target.value, detail: previous.building === LEGACY_LOCATION ? '' : previous.detail }))} className="form-full"><MenuItem value="" disabled>Selecciona el edificio</MenuItem>{CAMPUS_NAMES.map(name => <MenuItem key={name} value={name}>{name}</MenuItem>)}{place.building === LEGACY_LOCATION && <MenuItem value={LEGACY_LOCATION}>Ubicación anterior: {draft.foundLocation}</MenuItem>}</TextField>
+    {place.building !== LEGACY_LOCATION && <TextField label="Aula o lugar específico" placeholder="Ej. Aula 206, pasillo del segundo piso" value={place.detail} onChange={e => setPlace(previous => ({ ...previous, detail: e.target.value }))} helperText="Opcional. Indica el aula, laboratorio o área dentro del edificio." className="form-full" slotProps={{ htmlInput: { maxLength: 200 } }} />}
     <TextField required multiline minRows={2} label="Descripción pública" helperText={draft.category === 'dinero' ? 'Describe el hallazgo sin publicar monto, moneda ni denominaciones. Guarda esos detalles en Características reservadas.' : 'Color, tipo y características generales. No incluyas datos personales ni todas las señales para acreditar propiedad.'} value={draft.description} onChange={e => field('description', e.target.value)} className="form-full" slotProps={{ htmlInput: { maxLength: 500 } }} />
     <div className="form-divider form-full">Recepción y custodia · información interna</div>
     <FormControlLabel className="form-full" control={<Checkbox disabled={!receiveAllowed} checked={draft.received} onChange={e => { const checked = e.target.checked; setDraft(previous => ({ ...previous, received: checked, receivedDate: checked && !previous.receivedDate ? todayISO() : previous.receivedDate })) }} />} label="Confirmo que el decanato recibió el objeto" />
@@ -115,6 +118,7 @@ export default function AdminPanel({ items, session, demo, onCommit, blocked }: 
   const [status, setStatus] = useState('')
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
+  const [building, setBuilding] = useState('')
   const [destination, setDestination] = useState<'' | 'donacion' | 'remision_documentos' | 'pendiente90'>('')
   const [editing, setEditing] = useState<LostItem | null | undefined>(undefined)
   const [delivering, setDelivering] = useState<LostItem | null>(null)
@@ -125,12 +129,12 @@ export default function AdminPanel({ items, session, demo, onCommit, blocked }: 
   const [busy, setBusy] = useState(false)
   const receiveAllowed = canReceive(session)
   const invalidDates = Boolean(from && to && from > to)
-  const filtered = filterInternalItems(items, { query, status, from, to, disposition: destination })
+  const filtered = filterInternalItems(items, { query, status, from, to, building, disposition: destination })
   const reviewCount = filterInternalItems(items, { query: '', status: '', from: '', to: '', disposition: 'pendiente90' }).length
   const donatedCount = items.filter(item => item.disposition?.kind === 'donacion').length
   const remittedCount = items.filter(item => item.disposition?.kind === 'remision_documentos').length
   function destinationFilter(value: typeof destination) { setDestination(destination === value ? '' : value); setStatus('') }
-  function clearFilters() { setQuery(''); setStatus(''); setFrom(''); setTo(''); setDestination('') }
+  function clearFilters() { setQuery(''); setStatus(''); setFrom(''); setTo(''); setBuilding(''); setDestination('') }
   async function transition(next: LostItem, message: string) { await onCommit(items.map(item => item.id === next.id ? next : item), message); setError('') }
   async function action(run: () => Promise<void>) { try { setBusy(true); await run() } catch (cause) { setError(cause instanceof Error ? cause.message : 'No se pudo completar la operación.') } finally { setBusy(false) } }
   return <section className="admin-section" aria-labelledby="admin-title">
@@ -148,9 +152,9 @@ export default function AdminPanel({ items, session, demo, onCommit, blocked }: 
       <TextField label="Buscar en el registro" value={query} onChange={event => setQuery(event.target.value)} slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRounded /></InputAdornment> } }} />
       <TextField select label="Estado" value={status} onChange={event => setStatus(event.target.value)}><MenuItem value="">Todos los estados</MenuItem>{Object.entries(STATUS_LABELS).map(([key, label]) => <MenuItem key={key} value={key}>{label}</MenuItem>)}</TextField>
       {receiveAllowed && <TextField select label="Seguimiento / destino" value={destination} onChange={event => setDestination(event.target.value as typeof destination)}><MenuItem value="">Todos</MenuItem><MenuItem value="pendiente90">90 días · pendiente de revisión</MenuItem><MenuItem value="donacion">Donación registrada</MenuItem><MenuItem value="remision_documentos">Remisión a su emisor</MenuItem></TextField>}
-    </div><DateRangeFilter from={from} to={to} onChange={(nextFrom, nextTo) => { setFrom(nextFrom); setTo(nextTo) }} />
+    </div><TextField select label="Edificio o lugar" value={building} onChange={e => setBuilding(e.target.value)} fullWidth sx={{ mb: 2 }}><MenuItem value="">Todos los edificios y lugares</MenuItem>{CAMPUS_NAMES.map(name => <MenuItem key={name} value={name}>{name}</MenuItem>)}<MenuItem value={LEGACY_LOCATION}>Ubicación sin edificio identificado</MenuItem></TextField><DateRangeFilter from={from} to={to} onChange={(nextFrom, nextTo) => { setFrom(nextFrom); setTo(nextTo) }} />
     {invalidDates && <Alert severity="warning" className="date-warning">La fecha inicial debe ser anterior o igual a la fecha final.</Alert>}
-    <div className="admin-results" role="status" aria-live="polite"><span>{invalidDates ? 'Revisa el rango de fechas' : `${filtered.length} ${filtered.length === 1 ? 'registro' : 'registros'}`}</span>{Boolean(query || status || from || to || destination) && <Button size="small" onClick={clearFilters}>Limpiar filtros</Button>}</div></div>
+    <div className="admin-results" role="status" aria-live="polite"><span>{invalidDates ? 'Revisa el rango de fechas' : `${filtered.length} ${filtered.length === 1 ? 'registro' : 'registros'}`}</span>{Boolean(query || status || from || to || building || destination) && <Button size="small" onClick={clearFilters}>Limpiar filtros</Button>}</div></div>
     <TableContainer className="admin-table"><Table aria-label="Registro interno de objetos perdidos" size="small"><TableHead><TableRow><TableCell>Objeto / código</TableCell><TableCell>Hallazgo</TableCell><TableCell>Estado</TableCell><TableCell>Plazo de custodia</TableCell><TableCell>Custodia / destino</TableCell><TableCell>Acciones</TableCell></TableRow></TableHead><TableBody>{filtered.map(item => {
       const retention = retentionInfo(item)
       return <TableRow key={item.id}>

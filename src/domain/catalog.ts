@@ -1,3 +1,4 @@
+import { CAMPUS_NAMES, matchesBuilding } from './campus.ts'
 import type { Category, CatalogFilters, HistoryEntry, IdentityType, InternalFilters, ItemDraft, ItemStatus, ItemType, LostItem, PublicItem } from './types.ts'
 
 export const CATEGORY_LABELS: Record<Category, string> = {
@@ -63,8 +64,8 @@ export function normalizeClassification(category: string, title: string, itemTyp
   return { category: mapped, itemType: inferred ?? fallback }
 }
 
-// Zonas ilustrativas de la demo; la universidad confirmará sus nombres oficiales.
-export const LOCATIONS = ['Biblioteca', 'Aulas', 'Cafetería', 'Patio central', 'Estacionamiento', 'Área deportiva', 'Pasillos', 'Otros']
+// Edificios y lugares publicados en la guía oficial del campus UCSD.
+export const LOCATIONS = CAMPUS_NAMES
 export const STATUS_LABELS: Record<ItemStatus, string> = {
   borrador: 'Borrador', disponible: 'Disponible', entregado: 'Entregado', archivado: 'Archivado',
 }
@@ -126,6 +127,7 @@ export function filterInternalItems(items: LostItem[], filters: InternalFilters,
   return items.filter(item => {
     if (!isDate(item.foundDate)) return false
     if (filters.status && item.status !== filters.status) return false
+    if (filters.building && !matchesBuilding(item.foundLocation, filters.building)) return false
     if (filters.from && item.foundDate < filters.from) return false
     if (filters.to && item.foundDate > filters.to) return false
     if (filters.disposition === 'pendiente90' && !needsRetentionReview(item, onDate)) return false
@@ -191,7 +193,7 @@ export function filterPublicCatalog(items: PublicItem[], filters: CatalogFilters
     if (item.status !== 'disponible' || !isDate(item.foundDate)) return false
     if (filters.category && item.category !== filters.category) return false
     if (filters.itemType && item.itemType !== filters.itemType) return false
-    if (filters.location && item.foundLocation !== filters.location) return false
+    if (filters.location && !matchesBuilding(item.foundLocation, filters.location) && item.foundLocation !== filters.location) return false
     if (filters.from && item.foundDate < filters.from) return false
     if (filters.to && item.foundDate > filters.to) return false
     const text = normalize(`${item.code} ${item.title} ${item.description} ${CATEGORY_LABELS[item.category]} ${TYPE_LABELS[item.itemType]} ${item.foundLocation}`)

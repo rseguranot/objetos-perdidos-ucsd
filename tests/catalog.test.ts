@@ -6,8 +6,9 @@ import { loadItems, parseItems, resetItems, saveItems } from '../src/data/storag
 import type { ItemDraft } from '../src/domain/types.ts'
 
 const filters = { query: '', category: '', location: '', from: '', to: '' }
-// Fixtures originales con fechas fijas, independientes de los ejemplos relativos nuevos.
-const SEED_ITEMS = ALL_SEED_ITEMS.slice(0, 12)
+// Fixtures anteriores: verifican que las ubicaciones históricas siguen siendo consultables.
+const legacyLocations = ['Biblioteca', 'Estacionamiento', 'Cafetería', 'Aulas', 'Pasillos', 'Área deportiva', 'Biblioteca', 'Patio central', 'Pasillos', 'Aulas', 'Área deportiva', 'Aulas']
+const SEED_ITEMS = ALL_SEED_ITEMS.slice(0, 12).map((item, index) => ({ ...item, foundLocation: legacyLocations[index] }))
 const draft: ItemDraft = {
   title: 'Estuche de audífonos', category: 'electronica', itemType: 'estuche', description: 'Estuche negro',
   foundDate: '2026-09-28', foundLocation: 'Biblioteca', receivedDate: '', custodyLocation: '',

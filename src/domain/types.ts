@@ -66,6 +66,7 @@ export interface CatalogFilters {
 }
 
 export interface InternalFilters {
+  building?: string
   query: string
   status: string
   from: string

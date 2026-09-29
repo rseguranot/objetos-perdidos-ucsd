@@ -22,6 +22,8 @@ Google por redirección se permite solo cuando app y `authDomain` comparten orig
 
 Developer ya está dado de alta explícitamente; no repetir bootstrap. Es reservado, no asignable ni modificable desde Roles, incluso por el propio Developer. No implica IAM.
 
+Roles mantiene una interfaz compacta para gestionar accesos. Se retiraron la introducción, el título explicativo, los avisos técnicos de Firestore/Developer y las cuatro tarjetas que describían perfiles. Las explicaciones de permisos se conservan en esta documentación y en [arquitectura](arquitectura.md); los controles de autorización siguen vigentes. Este ajuste está publicado en ambos Hosting y se comprobó en el piloto con Developer: formulario y tabla visibles, sin esos elementos retirados. La versión con ubicaciones del campus aprobó 57 pruebas, lint y tres compilaciones con tipos, sin cambios de reglas.
+
 ## QA: identidades acotadas
 
 | Correo ficticio | Rol fijo |
