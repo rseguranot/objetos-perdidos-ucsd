@@ -4,6 +4,12 @@ Revisiones del 28 y 29 de septiembre de 2026. Entorno: Windows, Node 26.6.0 y np
 
 ## Automatización local
 
+### Flotación de la ilustración (29 de septiembre)
+
+Las tarjetas de audífonos, llaves, mochila y el aviso, junto con la estrella, usan una animación CSS suave con ciclos independientes de 6 a 10 segundos. Conservan sus inclinaciones originales y desplazan entre 5 y 12 píxeles, sin dependencias nuevas. Se activa únicamente con `prefers-reduced-motion: no-preference`.
+
+Se comprobaron las transformaciones en movimiento en el navegador local y las cinco animaciones detenidas (`animation-name: none`) al emular movimiento reducido. En viewport de 390 × 844, el ancho de página fue 375, sin desbordamiento horizontal. Se restauraron la preferencia y el viewport después de comprobarlos. Capturas: `evidence/hero-flotacion-escritorio.png` y `evidence/hero-flotacion-celular.png`. `npm run lint`, `npm run build` y `npm run build:firebase` aprobaron; ambas compilaciones incluyen comprobación de tipos. Esta mejora está verificada localmente; la publicación de Hosting sigue pendiente del consentimiento para Firebase CLI.
+
 - `npm run build` y comprobación de tipos: aprobados para la ampliación del 29 de septiembre.
 - `npm run build:firebase`: aprobado nuevamente después de la ampliación del 29 de septiembre. Genera `dist-firebase` sin publicar.
 - `npm run lint`: aprobado para la ampliación del 29 de septiembre.

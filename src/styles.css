@@ -57,6 +57,18 @@ nav { display: flex; align-items: center; gap: 22px; }
 .found-check svg { font-size: 19px; }
 .found-tag strong { display: block; font-size: 12px; }
 .found-tag div > span { font-size: 10px; color: #84907e; display: block; margin-top: 3px; }
+@keyframes hero-float {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(var(--float-tilt, 0deg)); }
+  50% { transform: translate3d(0, var(--float-rise, -10px), 0) rotate(calc(var(--float-tilt, 0deg) + var(--float-sway, 2deg))); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hero-art .floating-object, .hero-art .found-tag, .hero-art .art-star { animation: hero-float var(--float-duration, 8s) ease-in-out var(--float-delay, 0s) infinite; }
+  .floating-object.headphones { --float-tilt: -9deg; --float-duration: 7.5s; }
+  .floating-object.keys { --float-tilt: 13deg; --float-rise: -12px; --float-sway: -3deg; --float-duration: 9s; --float-delay: -3s; }
+  .floating-object.backpack { --float-tilt: 8deg; --float-rise: -8px; --float-sway: -2deg; --float-duration: 8.5s; --float-delay: -5s; }
+  .found-tag { --float-tilt: 3deg; --float-rise: -6px; --float-sway: -1deg; --float-duration: 10s; --float-delay: -2s; }
+  .art-star { --float-rise: -5px; --float-sway: 5deg; --float-duration: 6s; --float-delay: -1s; }
+}
 .catalog-section { padding: 60px 0 44px; }
 .section-heading { display: flex; justify-content: space-between; gap: 20px; align-items: center; margin-bottom: 27px; }
 .eyebrow { font-size: 10px; letter-spacing: .14em; font-weight: 700; color: #7a805f; }
