@@ -10,16 +10,31 @@ service cloud.firestore {
         && token.firebase.sign_in_provider in ['google.com', 'password']
         && mail.lower().matches('^[^@/]+@ucsd[.]edu[.]do$');
     }
+    // QA ONLY: separate project, fixed identities and roles. Never deploy this file to the pilot.
+    function qaEmail(value) { return value in ['administrador@demo.ucsd.invalid', 'decanato@demo.ucsd.invalid', 'registro@demo.ucsd.invalid']; }
+    function qaExpectedRole(value) {
+      return value == 'administrador@demo.ucsd.invalid' ? 'admin' : value == 'decanato@demo.ucsd.invalid' ? 'decanato' : 'registro';
+    }
+    function qaIdentity() {
+      let users = {'80BNkhJEiFefiK766if5VVwdJI73': 'administrador@demo.ucsd.invalid', 'b3XvYdKiWNSRq9uYFyHyTGXBuMl1': 'decanato@demo.ucsd.invalid', 'LasetVY58jWJTesXY1By4w0zcc93': 'registro@demo.ucsd.invalid'};
+      let token = request.auth.token;
+      return request.auth != null && token.email is string
+        && token.aud == 'ucsd-objetos-perdidos-pruebas'
+        && token.firebase.sign_in_provider == 'password'
+        && users.get(request.auth.uid, null) == token.email;
+    }
+    function verifiedStaffIdentity() { return qaEmail(request.auth.token.email) ? qaIdentity() : verifiedInstitutionalIdentity(); }
     function email() { return request.auth.token.email.lower(); }
     function staffRole() {
       // Read and validate one authorization record per operation. Missing records fail closed.
       let mail = email();
       let access = get(/databases/$(database)/documents/access/$(mail)).data;
       let role = access.role;
-      let allowed = verifiedInstitutionalIdentity()
+      let allowed = verifiedStaffIdentity()
         && access.active == true
         // Identity was verified above; the QA allowlist never contains this reserved address.
-        && (role == 'developer' ? mail == 'rsegura20250554@ucsd.edu.do' : true);
+        && (role == 'developer' ? mail == 'rsegura20250554@ucsd.edu.do' : true)
+        && (!qaEmail(mail) || role == qaExpectedRole(mail));
       return allowed ? role : '';
     }
     function hasRole(roles) { return staffRole() in roles; }
@@ -190,11 +205,12 @@ service cloud.firestore {
     }
     function assignableAccess(targetEmail) {
       return admin() && targetEmail != 'rsegura20250554@ucsd.edu.do'
-        && targetEmail.matches('^[^@/]+@ucsd[.]edu[.]do$') && targetEmail == targetEmail.lower()
+        && (targetEmail.matches('^[^@/]+@ucsd[.]edu[.]do$') || qaEmail(targetEmail)) && targetEmail == targetEmail.lower()
         && request.resource.data.keys().hasAll(['email', 'role', 'active', 'updatedByUid', 'updatedAt'])
         && request.resource.data.keys().hasOnly(['email', 'role', 'active', 'updatedByUid', 'updatedAt'])
         && request.resource.data.email == targetEmail
         && request.resource.data.role in ['admin', 'registro', 'decanato']
+        && (!qaEmail(targetEmail) || request.resource.data.role == qaExpectedRole(targetEmail))
         && request.resource.data.active is bool
         && request.resource.data.updatedByUid == request.auth.uid
         && request.resource.data.updatedAt == request.time
@@ -240,7 +256,7 @@ service cloud.firestore {
     }
     match /access/{targetEmail} {
       // No auto-enrollment: a denied user can only inspect their own document.
-      allow get: if verifiedInstitutionalIdentity() && (targetEmail == email() || admin());
+      allow get: if verifiedStaffIdentity() && (targetEmail == email() || admin());
       allow list: if admin() && limitedQuery();
       // Developer cannot be granted, demoted or revoked by ANY app client, including Developer itself.
       allow create: if assignableAccess(targetEmail);

@@ -1,6 +1,7 @@
 node_modules/
 dist/
 dist-firebase/
+dist-pruebas/
 *.tsbuildinfo
 .env
 .env.*

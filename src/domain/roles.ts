@@ -1,6 +1,7 @@
 import type { LostItem } from './types.ts'
 import { canDispose, retentionInfo } from './catalog.ts'
 import { recordsEqual } from './records.ts'
+import { testAccountRole, type TestAccountEnvironment } from './test-accounts.ts'
 
 export type Role = 'developer' | 'admin' | 'registro' | 'decanato'
 export const DEVELOPER_EMAIL = 'rsegura20250554@ucsd.edu.do'
@@ -14,8 +15,9 @@ export const ROLE_DESCRIPTIONS: Record<Role, string> = {
   registro: 'Registra hallazgos y edita sus propios borradores. No confirma recepción ni publica.',
   decanato: 'Registra, confirma recepción y custodia, publica, entrega y archiva objetos.',
 }
-export function institutionalEmail(value: string): string {
+export function institutionalEmail(value: string, environment?: TestAccountEnvironment): string {
   const email = value.trim().toLowerCase()
+  if (testAccountRole(email, environment)) return email
   if (email.length > 254 || !/^[a-z0-9.!#$%&'*+=?^_`{|}~-]+@ucsd\.edu\.do$/.test(email)) throw new Error('Introduce un correo válido de @ucsd.edu.do.')
   return email
 }
@@ -59,11 +61,13 @@ export function authorizeItemChange(session: Session, previous: LostItem | undef
   }
   if (!canReceive(session) && (next.status !== 'borrador' || next.received || next.receivedDate || next.custodyLocation || next.delivery || next.disposition)) throw new Error('La recepción, publicación, entrega y destino final corresponden al decanato.')
 }
-export function validateAccessChange(session: Session, entry: AccessEntry): AccessEntry {
+export function validateAccessChange(session: Session, entry: AccessEntry, environment?: TestAccountEnvironment): AccessEntry {
   if (!canManageRoles(session)) throw new Error('Solo un administrador o Developer puede gestionar permisos.')
-  const email = institutionalEmail(entry.email)
+  const email = institutionalEmail(entry.email, environment)
   if (!isRole(entry.role) || typeof entry.active !== 'boolean') throw new Error('Selecciona un rol y un estado válidos.')
   if (isProtectedAccess({ email, role: entry.role })) throw new Error('El acceso Developer está reservado y no puede asignarse, modificarse ni desactivarse desde esta aplicación.')
+  const testRole = testAccountRole(email, environment)
+  if (testRole && entry.role !== testRole) throw new Error('Esta cuenta de pruebas tiene un rol fijo; no puede cambiarse desde el gestor.')
   if (email === session.email.toLowerCase() && (!entry.active || entry.role !== 'admin')) throw new Error('No puedes desactivar ni retirar tu propio rol de administrador.')
   return { email, role: entry.role, active: entry.active }
 }

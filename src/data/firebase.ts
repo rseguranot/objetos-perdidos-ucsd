@@ -1,7 +1,8 @@
 import { initializeApp, type FirebaseOptions } from 'firebase/app'
-import { browserSessionPersistence, connectAuthEmulator, getAuth, getRedirectResult, GoogleAuthProvider, setPersistence, signInWithPopup, signInWithRedirect, signOut } from 'firebase/auth'
+import { browserSessionPersistence, connectAuthEmulator, getAuth, getIdToken, getRedirectResult, GoogleAuthProvider, reload, sendEmailVerification, setPersistence, signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, signOut } from 'firebase/auth'
 import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore'
 import { cloudMode, firebaseConfigured, googleRedirectConfigured } from './mode'
+import { institutionalEmail } from '../domain/roles'
 
 const options: FirebaseOptions = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -26,4 +27,28 @@ export async function loginGoogle(mode: 'popup' | 'redirect' = 'popup'): Promise
   if (mode === 'redirect') await signInWithRedirect(auth, provider)
   else await signInWithPopup(auth, provider)
 }
-export async function logoutGoogle(): Promise<void> { if (auth) await signOut(auth) }
+export async function loginEmail(email: string, password: string): Promise<void> {
+  if (!auth) throw new Error('El proyecto Firebase todavía no está configurado. Revisa las instrucciones de conexión.')
+  const cleanEmail = institutionalEmail(email)
+  if (!password) throw new Error('Introduce tu contraseña.')
+  await setPersistence(auth, browserSessionPersistence)
+  await signInWithEmailAndPassword(auth, cleanEmail, password)
+}
+export async function sendVerificationEmail(): Promise<void> {
+  const user = auth?.currentUser
+  if (!auth || !user) throw new Error('Inicia sesión antes de solicitar la verificación.')
+  institutionalEmail(user.email ?? '')
+  if (user.emailVerified) return
+  auth.languageCode = 'es'
+  await sendEmailVerification(user)
+}
+export async function refreshIdentity(): Promise<void> {
+  const user = auth?.currentUser
+  if (!user) throw new Error('Inicia sesión para comprobar la verificación.')
+  await reload(user)
+  // Replacing the session during reload must not refresh an obsolete identity.
+  if (auth?.currentUser !== user) return
+  await getIdToken(user, true)
+}
+export async function logout(): Promise<void> { if (auth) await signOut(auth) }
+export const logoutGoogle = logout

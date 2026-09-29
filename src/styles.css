@@ -175,6 +175,8 @@ nav { display: flex; align-items: center; gap: 22px; }
 .claim-box h3 { margin: 0; font-size: 16px; }
 .claim-box ol { padding-left: 19px; font-size: 13px; line-height: 1.75; }
 .profile-options { display: grid; gap: 12px; }
+.email-access-form { display: grid; gap: 18px; }
+.access-verification-actions { display: grid; gap: 8px; margin-bottom: 18px; }
 .profile-option { text-align: left; border: 1px solid #dce3d4; background: #fff; border-radius: 12px; padding: 17px; cursor: pointer; }
 .profile-option.selected { border-color: #15533f; background: #eff5e9; }
 .profile-option strong { display: block; font-size: 15px; color: #234d36; }

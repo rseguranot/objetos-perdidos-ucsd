@@ -1,171 +1,150 @@
-# Verificación de la demo y preparación Firebase
+# Verificación: estado vigente y evidencia histórica
 
-Revisiones del 28 y 29 de septiembre de 2026. Entorno: Windows, Node 26.6.0 y npm 11.18.0. Se distingue la simulación local, la configuración de consola y las comprobaciones reales anónimas. La operación autenticada todavía no está comprobada.
+## Estado vigente · 29 de septiembre de 2026
 
-## Automatización local
+Esta sección es la referencia actual. Las revisiones históricas siguientes documentan cómo se llegó a este estado; sus resultados locales no equivalen a pruebas de escritura remota.
 
-### Flotación de la ilustración (29 de septiembre)
-
-Las tarjetas de audífonos, llaves, mochila y el aviso, junto con la estrella, usan una animación CSS con ciclos independientes de 3.8 a 6.2 segundos. Conservan sus inclinaciones originales, se balancean y se desplazan entre 8 y 24 píxeles en vertical y hasta 6 en horizontal, sin dependencias nuevas. El recorrido es menor en celular. Se activa únicamente con `prefers-reduced-motion: no-preference`. Se intensificó a petición del usuario y se confirmaron transformaciones distintas entre observaciones de su pestaña local.
-
-Se comprobaron las transformaciones en movimiento en el navegador local y las cinco animaciones detenidas (`animation-name: none`) al emular movimiento reducido. En viewport de 390 × 844, el ancho de página fue 375, sin desbordamiento horizontal. Se restauraron la preferencia y el viewport después de comprobarlos. Capturas: `evidence/hero-flotacion-escritorio.png` y `evidence/hero-flotacion-celular.png`. `npm run lint`, `npm run build` y `npm run build:firebase` aprobaron; ambas compilaciones incluyen comprobación de tipos. La mejora también quedó incluida en la publicación de Hosting descrita más abajo.
-
-- `npm run build` y comprobación de tipos: aprobados para la ampliación del 29 de septiembre.
-- `npm run build:firebase`: aprobado nuevamente después de la ampliación del 29 de septiembre. Genera `dist-firebase` sin publicar.
-- `npm run lint`: aprobado para la ampliación del 29 de septiembre.
-- `npm test`: **39 de 39 pruebas aprobadas** en la revisión final. Incluyen clasificación, permisos, publicación, entrega, almacenamiento, fechas inclusivas, plazo a 90 días, frontera UTC−4, destinos, ejemplos idempotentes, Developer, evidencia externa y las tres regresiones descritas al final.
-
-## Recorrido local comprobado
-
-Se revisó categoría principal y tipo controlado: ocho categorías, con tipos compatibles. Registro de hallazgos creó su propio borrador sin controles de recepción ni custodia. Decanato confirmó recepción, fecha y ubicación de custodia; publicó el objeto, que apareció al consultar su código; después registró entrega, se retiró del catálogo disponible y se archivó conservando historial.
-
-El código correlativo local se calcula usando todos los registros, aunque la vista esté filtrada por rol. Se comprobaron los códigos terminados en `0013` y `0014`, sin colisión. Firebase utiliza `UCSD-año-UUID` completo para evitar colisiones entre operadores simultáneos y conserva el código al editar; esa creación remota aún no se ha probado con identidades autenticadas.
-
-Se conservaron los datos previos y los dos objetos de QA quedaron archivados, fuera del catálogo público. **No se restablecieron los datos al terminar esta revisión.**
-
-Administrador agregó `qa.roles@ucsd.edu.do` como identidad ficticia con rol registro activo. Se comprobó el acceso simulado; al desactivarlo, la gestión quedó denegada y el cambio persistió tras recargar. El intento de retirar o desactivar el propio rol de administrador se bloqueó.
-
-La ficha pública no muestra características reservadas ni custodia interna. Se revisaron filtros, búsqueda sin coincidencias, ficha ampliada y copia del código, que no envía mensajes. Las fechas inclusivas tienen cobertura de pruebas del dominio. La revisión por teclado es parcial y no constituye una auditoría completa de accesibilidad.
-
-La vista previa de producción se revisó en escritorio y a **390 × 844**, con catálogo, tipos, roles y formularios contenidos en pantalla. La consola no mostró errores ni advertencias en esa revisión. Esto es comprobación de viewport, no prueba en un teléfono físico. El servidor preview de 4173 se cerró después de QA; los servidores locales demo 5173 y Firebase 5174 permanecieron disponibles al cierre.
-
-## Ampliación local del 29 de septiembre
-
-Hallazgo desde/hasta están siempre visibles en el catálogo y panel, con Hoy, Este mes, Sin fechas y Limpiar filtros. Se retiró del hero «Consulta libre, sin cuenta». El rango sigue siendo inclusivo; invertirlo muestra alerta. El seguimiento de 90 días se calcula desde recepción, no desde hallazgo, y no ejecuta destinos automáticamente.
-
-La semilla nueva tiene 37 registros (12 originales + 25 ejemplos universitarios), 30 disponibles, dos donaciones registradas, una remisión de documentos y dos pendientes de revisión a 90 días. En el navegador existente se conservaron 14 registros previos y se añadieron los 25 ejemplos: **39 registros**. La agregación no reemplaza IDs, códigos, historial ni roles, y no transfiere datos a Firebase.
-
-Comprobaciones del navegador integrado con datos ficticios:
-
-- **Hoy** en catálogo mostró dos coincidencias. En el registro interno mostró dos filas.
-- Con entrada nativa por teclado, desde `2026-09-30` hasta `2026-09-29` se mostró alerta. Al cambiar la fecha inicial a `2026-09-27`, aparecieron ocho coincidencias, incluyendo ambos extremos. Esta interacción sí se comprobó en la ampliación.
-- Antes de los destinos, las métricas mostraron dos pendientes de revisión, dos donados y un documento remitido. Son totales cargados, independientes de los filtros de tabla.
-- Registrar una donación ficticia válida de la mochila que cumplió el plazo archivó el registro: disponibles de 30 a 29, donados de dos a tres.
-- Registrar remisión ficticia del documento a su emisor retiró otra publicación: disponibles a 28, remitidos a dos y pendientes de revisión a cero.
-
-Se comprobó el historial de la nueva donación terminada en `0035`: conserva custodia, características reservadas, eventos anteriores, actor y constancia del traslado. Captura: `evidence/donacion-historial.png`.
-
-Tras recargar la demo en 5173, persistieron 28 objetos públicos. Decanato mostró 39 registros, tres donados, dos documentos remitidos y cero pendientes de revisión. Se conservaron los 14 registros anteriores más los 25 nuevos sin duplicados. No se restablecieron objetos ni permisos.
-
-En la vista previa de la compilación del 29 de septiembre, a **390 × 844**, catálogo Hoy y administración Hoy mostraron dos resultados cada uno; ambos campos de fechas permanecieron visibles. El ancho de página fue 375, dentro del viewport de 390. La tabla de 841 de ancho quedó dentro de su contenedor de 333 con desplazamiento horizontal propio, sin desbordar la página. Las consolas de demo y preview no mostraron errores ni advertencias. Se restauró el viewport normal y se cerró la pestaña preview al terminar. No se trata de una prueba en un teléfono físico.
-
-## Publicación de Hosting (29 de septiembre, aproximadamente 05:38 UTC−4)
-
-Se publicó la versión de aplicación del commit `5736d3e`, incluida la flotación más visible, en [ucsd-objetos-perdidos.web.app](https://ucsd-objetos-perdidos.web.app). Firebase CLI oficial 15.32.0 completó la sesión con la cuenta institucional y desplegó únicamente Hosting: 19 archivos de `dist-firebase`, sin despliegue de reglas, cambios de facturación ni migración de registros o roles locales. La consola confirmó versión actual `57e95e`, 29/09/2026 a las 05:38, y plan Spark sin costo (USD 0 al mes).
-
-- HTTPS respondió 200 y su HTML coincidió con `dist-firebase/index.html`.
-- El CSS publicado respondió 200, coincidió con el archivo compilado e incluyó `hero-float`; el navegador confirmó la animación de audífonos con ciclo de 4.8 segundos.
-- El catálogo terminó de cargar con cero registros y el mensaje de ausencia de coincidencias, sin errores o advertencias de consola. Las cinco comprobaciones anónimas de Firestore se repitieron y aprobaron.
-- Acceso personal mostró Google, sin identidades simuladas. No se inició una sesión de usuario en la app: el consentimiento y login de CLI solo permiten operar la herramienta de despliegue.
-- A 390 × 844, la página midió 375 de ancho y conservó la flotación con menor recorrido. Se restauró el viewport al terminar. No se probó en un teléfono físico.
-
-Capturas excluidas de Git: `evidence/hosting-publicado.png` y `evidence/hosting-publicado-celular.png`. Siguen pendientes las reglas nuevas de Developer y evidencia de entrega, el UID y permiso Developer inicial, y la gestión autenticada de extremo a extremo. No se hizo push a GitHub.
-
-## Firebase comprobado
-
-La versión activa comprobada corresponde a destinos de 90 días. La ampliación posterior de fuente con Developer y evidencia de entrega está preparada, **sin compilar ni publicar en consola**. Tampoco se creó permiso Developer real. Las comprobaciones remotas de este documento no validan esa versión nueva.
-
-| Recurso | Estado observado |
+| Comprobación | Resultado actual |
 |---|---|
-| Proyecto | `ucsd-objetos-perdidos`, institucional, Spark sin facturación vinculada |
-| Aplicación web | UCSD Objetos Perdidos Web registrada |
-| Google Authentication | Proveedor Habilitada; `localhost` autorizado |
-| Firestore | Standard, `(default)`, producción, ubicación `nam5` |
-| Reglas | Ampliación de destinos publicada y compilada el 29/09 a las 00:06; versión del 28/09 a las 23:35 conservada como referencia para rollback |
-| Usuarios y administrador inicial | Users vacío; sin UID ni administrador inicial |
-| Hosting y Git remoto | Hosting publicado en `ucsd-objetos-perdidos.web.app`; `origin` GitHub configurado; entrega mediante commit local, sin push |
+| Google institucional real | Login completado en `https://ucsd-objetos-perdidos.firebaseapp.com` con `rsegura20250554@ucsd.edu.do`; UID comprobado en Authentication |
+| Developer | Documento explícito activo; sesión Developer y gestor Roles protegido comprobados en navegador |
+| Hosting institucional | Publicado en firebaseapp.com y web.app; catálogo institucional vacío, sin hallazgos reales |
+| Reglas institucionales | Versión final publicada, incluida optimización y fecha autoritativa; fuente activa leída por API coincide con el archivo |
+| Email/Password | Proveedor habilitado sin facturación; no se creó usuario institucional contraseña ni vínculo/reset automático |
+| QA aislado | Proyecto `ucsd-objetos-perdidos-pruebas`, Spark sin facturación, Hosting publicado y carga inicial de 37 ejemplos ficticios con 30 públicos |
+| Acceso QA en navegador | Login por contraseña y logout comprobados para Registro, Decanato y Administrador; Registro ve solo sus objetos y no Roles, Decanato ve tabla completa, Administrador ve tres accesos activos con roles fijos; catálogo final de 28 públicos comprobado |
+| Pruebas automatizadas | **53 de 53 aprobadas**, incluidas tres del codec Firestore y dos de reconocimiento de commit |
+| Tipos y análisis estático | Aprobados |
+| Compilaciones | Demo, piloto Firebase y QA aprobadas |
+| Circuito SDK QA | **Aprobado completo**, ejecución final con objeto ficticio `2979320c-f8b3-49e2-8605-aa73ab5f93f8`; transiciones, proyección pública, entrega, archivo, revocación y denegaciones descritas abajo |
+| Codec y destinos remotos | Timestamp autoritativo del servidor y lectura ISO/legacy validados; donación 0033 y remisión 0034 aprobadas con retirada pública |
+| Publicación final | Hosting con codec, 19 archivos por proyecto, y reglas finales publicados en piloto y QA |
+| Parche posterior de reintento | Compilado, revisado y republicado en ambos Hosting, 19 archivos cada uno; nueva donación E2E UI aprobada, sin forzar otra pérdida de respuesta |
+| Anónimo institucional con reglas finales | Cinco comprobaciones aprobadas, 0 públicos; facturación deshabilitada verificada en ambos proyectos |
 
-El selector no permitió elegir `us-east1`; la consola confirmó `nam5`, ubicación aplicada por Firebase. Se conservó la base sin cambiarla ni recrearla.
+El circuito autenticado de objetos se probó mediante SDK contra el backend real QA. En navegador se verificaron por separado las sesiones y vistas de los tres roles. El piloto institucional tiene login Google y Roles protegido comprobados; no se declara el circuito completo de objetos probado con esa identidad institucional. Los resultados de QA pertenecen exclusivamente a su proyecto separado.
 
-Se ejecutó `node --env-file=.env.firebase.local scripts/verify-firebase-public.mjs` contra el proyecto real: **cinco comprobaciones anónimas de solo lectura aprobadas**.
+Las tres cuentas QA `.invalid` usan contraseña y una excepción limitada a proyecto/token audience, UID/correo fijos y rol activo esperado. No simulan verificación de correo institucional ni permiten Developer. Las credenciales permanecen en un archivo TEMP fuera de Git; no se incluyen en este documento.
 
-| Comprobación | Resultado |
+Google por redirección se permite solo cuando aplicación y `authDomain` comparten origen. Desde web.app se ofrece popup o enlace explícito al firebaseapp.com del mismo piloto; cada origen mantiene su sesión. El botón Google del proyecto QA lleva explícitamente al piloto, no demuestra login Google en QA. Ver [acceso y pruebas](acceso-y-pruebas.md).
+
+Evidencia actual local, excluida de Git: `evidence/google-developer-activo.png`, `evidence/acceso-google-y-correo.png` y `evidence/roles-pruebas-activos.png`.
+
+## Circuito SDK QA aprobado
+
+| Operación o restricción real | Resultado |
 |---|---|
-| Catálogo público con `orderBy('foundDate', 'desc')` y `limit(500)` | Permitido; 0 documentos |
-| Lectura anónima de documento interno | Denegada |
-| Lectura anónima de permiso | Denegada |
+| Registro crea borrador propio y consulta filtrada por creador | Permitido |
+| Registro confirma recepción o publica | Denegado |
+| Decanato confirma recepción y publica | Permitido |
+| Anónimo consulta publicación sin campos de custodia privada | Permitido, proyección comprobada |
+| Anónimo lee documento privado | Denegado |
+| Entrega sin identificación y referencia externa | Denegada |
+| Entrega con carné y referencia externa ficticia | Permitida; documento público retirado |
+| Archivo después de entrega | Permitido; historial conservado |
+| Administrador consulta tres roles QA | Permitido |
+| Administrador cambia un rol fijo QA o concede Developer | Denegado |
+| Registro revocado con sesión abierta | Acceso retirado; restauración comprobada |
+| Decanato borra solo la publicación | Denegado |
+| Registro entrega y borra publicación en lote | Denegado |
+| Decanato inactivo realiza lote | Denegado; acceso activo restaurado |
+| Anónimo borra publicación | Denegado |
+
+La ejecución final ampliada de `scripts/verify-firebase-qa.mjs` aprobó con el registro `2979320c-f8b3-49e2-8605-aa73ab5f93f8`; las pruebas anteriores con `5d7d9e0d-9600-4b0e-a603-60230910d16c` y `c10a2343-0240-40c2-a302-bc3cbb25a63a` son antecedentes aprobados. Los 37 objetos y 30 publicaciones corresponden a la semilla inicial; al cierre se confirmaron 28 públicos en navegador.
+
+La donación del ejemplo 0033 y remisión del 0034 aprobaron contra QA y retiraron sus publicaciones. El script final añadió dos objetos antiguos ficticios, publicó y registró donación/remisión con timestamp del servidor. `disposition.completedAt` es un timestamp nativo autoritativo de Firestore: las reglas exigen `completedAt == request.time` y el inicio del día 90 desde recepción en Santo Domingo (UTC−4). El codec lo convierte a ISO para la UI y conserva lectura de valores anteriores. La lectura con codec aprobó; una fecha ISO suministrada por cliente y la reescritura del destino se denegaron. Los 14 cuadernos y la mochila de diagnóstico quedaron archivados.
+
+El bloqueo previo fue el límite de 1000 expresiones de evaluación durante publicación/entrega, **no la recepción**. Se optimizó la consulta de rol, validación nativa de calendario, comparación de proyección pública y reutilización del historial. Se retiraron verificaciones de presencia redundantes donde la lectura obligatoria del campo ya la exige. Las denegaciones anteriores se conservaron y aprobaron. Las reglas finales están publicadas en ambos proyectos. [Límites oficiales](https://firebase.google.com/docs/rules/rules-behavior).
+
+La actualización final de Hosting publicó 19 archivos en piloto y QA con codec y etiqueta del entorno corregida. Las fuentes de reglas activas se recuperaron por API y coincidieron con los archivos, SHA-256 piloto `0e977d3bef19b25759135b0e6948ce6c98b17eeea626d31ebca4e390c698b36a` y QA `f0e43f5bdd47fe8f4eef7f5e68513356fd00b0863cd71d2ac8c976da5daf6fc1`. Ambos proyectos mantienen `billingEnabled: false` y proveedor contraseña habilitado.
+
+## Reintento tras respuesta de commit perdida
+
+En navegador QA apareció `Commit RestConnection unavailable` después de persistir una donación ficticia cuyo ID comienza por `417eaed3`. El reintento de transacción encontraba el objeto modificado por esa misma operación y producía un conflicto falso; la pérdida de respuesta no significó pérdida de la escritura.
+
+`writeItem` ahora lee y decodifica el registro actual y reconoce únicamente la propuesta completa ya persistida, incluido UUID/evento de historial, actor, contenido, UID y código. Solo normaliza la fecha autoritativa de un destino nuevo. Una coincidencia retorna éxito sin nuevas escrituras; los cambios diferentes conservan el conflicto. Dos pruebas nuevas elevan el total a 53 aprobadas; tipos, lint y las tres compilaciones aprobaron. Una revisión independiente aprobó el parche y sus cinco casos codec/matcher.
+
+Las reglas no cambiaron y mantienen sus hashes comprobados. El resultado SDK ampliado con ID `2979320c-f8b3-49e2-8605-aa73ab5f93f8` sigue vigente. El parche se republicó en ambos Hosting, 19 archivos por proyecto.
+
+Una nueva donación UI con Decanato, objeto ficticio `e8a80958-af71-4ba2-ae14-d3922b174044` recibido el 21/06, completó el formulario: el diálogo cerró sin error, la tabla mostró Donado y el historial conservó creación más exactamente un evento de donación. La fecha autoritativa mostrada fue 29/09/2026 8:05:55 a. m. La nueva operación no reprodujo el error de conexión; el log anterior pertenecía al intento previo. No se forzó otra pérdida de respuesta y no se declara E2E de recuperación inducida; el reconocimiento idempotente está cubierto por pruebas de lógica y revisión. Captura: `evidence/qa-donacion-servidor-ui.png`, excluida de Git.
+
+Al cierre QA mostró 59 registros, 28 públicos, seis donados, tres remitidos y cero pendientes de revisión. Son totales del conjunto cargado después de ensayos ficticios, distintos de la semilla de 37/30. La mochila del intento `417eaed3` quedó donada por su commit persistido; no se describe como archivo común.
+
+## Pendientes actuales
+
+- Verificar cualquier caso adicional necesario que no esté cubierto por la matriz anterior.
+- Evaluar el acceso institucional por contraseña con correo verdaderamente verificado y permisos explícitos; no está demostrado por el login de cuentas ficticias QA.
+- Acordar con UCSD responsables, contacto, custodia, procedimiento y evidencia externa antes de utilizar objetos o datos reales.
+
+No quedan pendientes el primer ingreso Google, el UID institucional, el alta Developer ni la primera publicación de Hosting: esos hitos ya fueron superados. La revocación de Registro en sesión abierta también quedó comprobada en QA. No hubo facturación vinculada ni almacenamiento de fotografías. El plazo de 90 días continúa como propuesta, sin caducidad, donación o remisión automáticas.
+
+## Evidencia histórica local · 28 y 29 de septiembre
+
+Entorno de las revisiones locales: Windows, Node 26.6.0 y npm 11.18.0. Objetos, receptores y constancias fueron ficticios. Las revisiones previas de 36/39/48 pruebas fueron sustituidas por el resultado vigente de 53; los recorridos siguientes corresponden a localStorage e identidades simuladas.
+
+### Catálogo, filtros y preservación
+
+Se revisaron ocho categorías y tipos compatibles, búsqueda por texto/código/zona, rangos inclusivos, aviso sin coincidencias y ficha pública sin custodia ni características reservadas. Copiar código no envía mensajes.
+
+Hallazgo desde/hasta permanecen visibles en catálogo y panel. Hoy mostró dos coincidencias; un rango nativo desde 30/09 hasta 29/09 mostró alerta. Cambiar la fecha inicial a 27/09 produjo ocho coincidencias, incluyendo ambos extremos. Este mes, Sin fechas y Limpiar filtros conservan su alcance de consulta; no alteran registros.
+
+La semilla tiene 37 registros (12 originales + 25 ejemplos universitarios), 30 disponibles, dos donaciones de ejemplo, una remisión y dos pendientes de revisión a 90 días. En el navegador existente se añadieron los 25 ejemplos a 14 registros previos: 39, sin reemplazar IDs, códigos, historial ni roles. Se comprobó recarga sin duplicados. No se restablecieron objetos ni permisos al terminar.
+
+Los códigos correlativos locales se calcularon con todos los registros aun cuando Registro viera solo los propios; se verificaron los terminados en 0013 y 0014 sin colisión. El modo remoto usa año + UUID completo; su circuito SDK QA está comprobado en la sección vigente.
+
+### Recepción, devolución, destinos y roles simulados
+
+Registro creó su propio borrador sin poder confirmar recepción ni custodia. Decanato confirmó recepción/fecha/custodia, publicó, consultó el código y devolvió el objeto; salió del catálogo y conservó historial al archivarlo.
+
+Administrador agregó una identidad ficticia con rol registro, comprobó acceso simulado y lo desactivó. La denegación y los permisos persistieron después de recargar. Se bloqueó retirar el propio administrador. Developer simulado solo ofreció los tres roles normales; la cuenta reservada estuvo protegida también desde Administrador. Esta parte es evidencia local, distinta del acceso Developer remoto vigente.
+
+Donación ficticia de mochila y remisión ficticia de documento retiraron publicaciones y dejaron registros archivados. Tras recargar: 39 registros, 28 públicos, tres donados, dos remitidos y cero pendientes de revisión. El historial de la donación terminada en 0035 conservó custodia, detalles reservados, eventos anteriores, actor y acta. Esto documenta operaciones de demo, no traslados reales.
+
+La entrega ampliada se comprobó con receptor/prueba ficticios, tipo de identificación, referencia externa de foto y checkbox. Antes de confirmar el checkbox no se pudo entregar. La app no tomó ni almacenó fotos. Los registros locales 0040 en desarrollo y 0038 en preview pertenecieron a almacenamientos distintos; se conservaron tras recarga con entrega e historial intactos.
+
+Tres regresiones se reprodujeron y corrigieron: recepción confirmada sin fecha/custodia, textos superiores al máximo de reglas y archivo de una entrega que modificaba otros datos. La validación ahora exige recepción completa, límites de texto y exactamente un evento de archivo con datos anteriores conservados.
+
+### Presentación y accesibilidad parcial
+
+Las tarjetas de la ilustración se comprobaron en movimiento y detenidas al emular `prefers-reduced-motion`. Los ciclos independientes no requirieron dependencias nuevas.
+
+Se revisó a 390 × 844: catálogo y administración Hoy mostraron dos resultados, fechas visibles y página de 375 de ancho. Una tabla de 841 quedó en contenedor de 333 con scroll propio; el diálogo de entrega de 326 tuvo desplazamiento vertical interno. La página no desbordó. Consolas de demo y preview sin errores ni advertencias. Se restauraron viewport/preferencia y cerró la vista previa usada para QA.
+
+Se usó teclado y se comprobó cierre de diálogos/retorno del foco. Es una revisión parcial, no auditoría completa de accesibilidad ni prueba en teléfono físico.
+
+Capturas históricas dentro de `evidence/`, excluidas de Git:
+
+- `roles-escritorio.png`, `roles-celular.png`, `catalogo-tipos-celular.png`.
+- `donacion-historial.png`, `admin-fechas-donaciones.png`, `admin-fechas-movil.png`, `catalogo-fechas-movil.png`.
+- `hero-flotacion-escritorio.png`, `hero-flotacion-celular.png`.
+- `developer-protegido.png`, `developer-protegido-admin.png`.
+- `entrega-identidad-evidencia.png`, `entrega-evidencia-historial.png`, `entrega-evidencia-movil.png`.
+- `qa-final-entrega-movil.png`, `qa-final-historial-archivado.png`.
+
+## Antecedentes de publicación y lectura remota
+
+La primera publicación institucional del 29/09, aproximadamente 05:38 UTC−4, desplegó 19 archivos de `dist-firebase` con Firebase CLI temporal. HTTPS/HTML/CSS respondieron 200 y coincidieron con la compilación; el catálogo cargó con cero registros y la ilustración animada. Ese primer despliegue fue solo Hosting. Las publicaciones posteriores ya incluyen reglas Developer/entrega y acceso real; no aplicar los pendientes de aquella primera publicación al estado actual.
+
+Firestore Standard `(default)` quedó en `nam5`, ubicación comprobada en consola, sin recrear la base para escoger us-east1. Las versiones iniciales de reglas del 28/09 a las 23:35 y 29/09 a las 00:06 son antecedentes para recuperación, no la descripción de los permisos institucionales actuales.
+
+Se ejecutó la comprobación institucional anónima de solo lectura:
+
+```powershell
+node --env-file=.env.firebase.local scripts/verify-firebase-public.mjs
+```
+
+| Comprobación | Resultado documentado |
+|---|---|
+| Catálogo con `orderBy('foundDate', 'desc')` y `limit(500)` | Permitido, 0 registros |
+| Documento privado anónimo | Denegado |
+| Documento de permiso anónimo | Denegado |
 | Consulta pública sin límite | Denegada |
 | Consulta pública con `limit(501)` | Denegada |
 
-El script no escribió ni eliminó registros y no utilizó credenciales administrativas. No comprueba autorización de escrituras, roles autenticados ni devolución de objetos reales.
+La comprobación no escribió ni eliminó registros ni utilizó credenciales administrativas. Sus cinco casos no validan todo el backend autenticado.
 
-Las cinco lecturas anónimas se repitieron y aprobaron después de publicar las reglas ampliadas el 29 de septiembre. Los nuevos controles de destino final están compilados y publicados; sus permisos autenticados todavía no se han comprobado contra el backend.
+Los primeros intentos Google en el navegador integrado terminaron en popup cerrado o retorno anónimo; el control de Chrome también agotó tiempo de espera. Son antecedentes superados por el login institucional real descrito arriba. No se confirmó su causa; no se conservan como pendientes actuales. Ver [condiciones oficiales de redirección](https://firebase.google.com/docs/auth/web/redirect-best-practices).
 
-## Google real pendiente
+Capturas históricas: `evidence/hosting-publicado.png`, `evidence/hosting-publicado-celular.png`, `evidence/firebase-proyecto-spark.png`, `evidence/firebase-google-habilitado.png`, `evidence/firebase-reglas-publicadas.png`, `evidence/firebase-reglas-90-dias.png` y `evidence/firebase-ubicacion.png`.
 
-El popup del navegador integrado terminó con `auth/popup-closed-by-user`. La alternativa por redirección mostró selector de cuenta y consentimiento para nombre, perfil y correo; al volver, la app permaneció anónima y Authentication Users siguió vacío. No se obtuvo UID ni se creó permiso inicial. No se declara ingreso exitoso por haber visto consentimiento.
-
-La aplicación ofrece y permite redirección solo si `authDomain === window.location.host`; localhost utiliza popup. La siguiente comprobación es abrir `http://localhost:5174` en un navegador normal y completar el popup. Una incompatibilidad de almacenamiento o dominio durante la redirección es una hipótesis, no una causa confirmada. Firebase explica los requisitos de ese flujo en sus [recomendaciones oficiales](https://firebase.google.com/docs/auth/web/redirect-best-practices).
-
-Solo tras comprobar usuario y UID reales se prepara manualmente el acceso inicial reservado `developer` según [la guía Firebase](firebase-setup.md), junto con las reglas correspondientes. No existe autoasignación de rol real.
-
-El 29 de septiembre, el control de Chrome normal agotó el tiempo de espera al seleccionar la demo. No se volvió a intentar login Google. Sigue pendiente el estado original sin UID ni administrador inicial; el fallo de control del navegador no demuestra un fallo nuevo de autenticación.
-
-## Evidencia y límites
-
-Capturas locales, excluidas de Git:
-
-- `evidence/roles-escritorio.png` y `evidence/roles-celular.png`.
-- `evidence/catalogo-tipos-celular.png`.
-- `evidence/donacion-historial.png`.
-- `evidence/admin-fechas-donaciones.png`.
-- `evidence/admin-fechas-movil.png` y `evidence/catalogo-fechas-movil.png`.
-- `evidence/firebase-proyecto-spark.png`.
-- `evidence/firebase-google-habilitado.png`.
-- `evidence/firebase-reglas-publicadas.png` y `evidence/firebase-ubicacion.png`.
-
-Las identidades y restricciones locales son simuladas; los datos internos ficticios están en el navegador y pueden inspeccionarse. La publicación de reglas y cinco lecturas anónimas reales verifican un subconjunto del backend. Faltan login/cierre de sesión reales, UID, bootstrap del administrador, permisos autenticados, revocación y registro → publicación → entrega contra Firestore. No se ejecutó Emulator Suite.
-
-Antes de utilizar datos reales, completar esas pruebas y acordar con UCSD responsables, contacto, custodia y procedimiento definitivo. La demo continúa siendo una propuesta no oficial.
-
-## Developer e identificación en entrega · ampliación posterior del 29/09
-
-Tipos, lint, compilación demo y compilación Firebase aprobaron. Pasaron 36 pruebas. No se añadieron dependencias ni se vinculó facturación. No se publicaron reglas nuevas ni se desplegó Hosting.
-
-En la demo existente, la migración agregó únicamente el perfil Developer reservado; conservó admin, decanato, registro y el acceso QA inactivo. Se comprobó desde Developer que el menú solo ofrece tres roles normales y que escribir el correo reservado para degradarlo devuelve un error sin cambiar el acceso. Desde Administrador, Developer aparece con botón Acceso protegido deshabilitado. Esto sigue siendo simulación local, no prueba de autorización remota.
-
-Developer creó el objeto ficticio `UCSD-2026-0040`, confirmó recepción y custodia, lo publicó y registró la entrega con receptor ficticio, prueba de propiedad, tipo Carné de estudiante, referencia `FOTO-FICTICIA-UCSD-0040-entrega` y checkbox confirmado. Antes de confirmar ese checkbox el botón estaba deshabilitado. No se tomó ni guardó una foto real.
-
-La consulta pública del código tras entrega devolvió ninguna coincidencia. El historial mostró identificación, referencia externa y responsable, conservando recepción y publicación anteriores. Tras recargar, esos datos y los cinco accesos siguieron presentes. El registro QA quedó archivado con su entrega intacta; se conservaron los 39 registros anteriores y el nuevo, sin restablecer objetos ni roles.
-
-Se revisó el formulario ampliado a 390 × 844: ancho del diálogo 326, contenido 311, página 390, sin desbordamiento horizontal. El contenido largo tiene desplazamiento vertical dentro del diálogo. Se canceló esa revisión sin entregar otro objeto y se restauró el viewport. Consola sin errores ni advertencias en la revisión local.
-
-Evidencias: `developer-protegido.png`, `developer-protegido-admin.png`, `entrega-identidad-evidencia.png`, `entrega-evidencia-historial.png`, `entrega-evidencia-movil.png`, dentro de `evidence/` excluido de Git.
-
-Pendientes nuevos: compilación/publicación de las reglas actuales, ingreso Google real, alta Developer explícita de la cuenta institucional validada y pruebas autenticadas. La URL Hosting es una posibilidad investigada, no un despliegue autorizado o ejecutado. Ver [alojamiento y evidencia](alojamiento-y-evidencia.md).
-
-## Revisión final y correcciones antes del commit
-
-La revisión independiente identificó tres diferencias entre la validación local y los requisitos de las reglas. Se reprodujeron con tres pruebas que fallaron antes de corregir el código:
-
-1. Un borrador podía marcar recepción confirmada sin custodia o fecha. Ahora se requieren ambas al confirmar recepción, aun cuando no se publique.
-2. El dominio aceptaba textos que superarían los máximos de Firestore. Ahora rechaza el exceso en nombre, descripción, zona, custodia, características reservadas, receptor y prueba. Los formularios también limitan los campos correspondientes.
-3. La autorización local permitía archivar una entrega y alterar simultáneamente otros datos. Ahora conserva todos los datos anteriores y exige exactamente un nuevo evento de historial. Se ajustó la prueba histórica para utilizar un archivo real con su evento, conservando entregas antiguas sin inventar evidencia.
-
-Las **39 pruebas automatizadas** aprobaron después de las correcciones. Tipos, lint y compilaciones demo/Firebase aprobaron. No se añadieron dependencias. También se aclaró el aviso de perfiles simulados para evitar sugerir que el proyecto Firebase todavía no existe.
-
-Se revisó la compilación demo de producción con `npm run preview` en `http://127.0.0.1:4173`, con almacenamiento propio de esa dirección y únicamente datos ficticios. El objeto de prueba fue `UCSD-2026-0038`; no es el `0040` del servidor de desarrollo 5173. No se restablecieron los datos ni los permisos de ninguna dirección.
-
-| Caso revisado en navegador | Resultado observado |
-|---|---|
-| Hoy + Electrónica + texto «celular» | Una coincidencia del 29/09; ficha con código, fecha, zona y procedimiento |
-| Búsqueda sin coincidencias | Aviso aclara que no implica que el objeto no haya sido encontrado |
-| Correo institucional sin autorización | Gestión denegada |
-| Registro de hallazgos | Custodia y recepción deshabilitadas; crea su borrador y no tiene acción Publicar |
-| Decanato publica antes de recibir | Bloqueado con explicación |
-| Guardar recepción sin custodia | Bloqueado antes de persistir |
-| Recepción válida, tipo Calculadora y publicación | Registro disponible; catálogo pasó de 30 a 31 |
-| Consulta del código publicado | Ficha pública sin custodia ni señal reservada QA |
-| Entrega antes de confirmación | Botón deshabilitado; requiere identificación y referencia externa |
-| Entrega ficticia completa | Estado Entregado; catálogo volvió a 30 y búsqueda del código sin coincidencias |
-| Recarga y selección de Decanato | Entrega, custodia, señal reservada, identificación, referencia e historial persistieron |
-| Archivo de la entrega y segunda recarga | Estado Archivado persistido; conserva datos y agrega el evento de archivo |
-| Developer en compilación final | Gestor solo ofrece admin/registro/decanato; cuenta reservada protegida y actualización de su permiso rechazada |
-| Pantalla 390 × 844 | Diálogo de entrega de 326 px, contenido desplazable; tabla de unos 742 px dentro de contenedor de 335 px; página no desborda el viewport |
-| Consola de la vista previa | Sin errores ni advertencias durante el recorrido |
-
-La recarga termina la identidad simulada seleccionada: hay que volver a elegir el perfil; los objetos y la lista de permisos sí persisten. Se utilizaron controles de teclado para navegar y confirmar operaciones, sin declarar una auditoría completa de accesibilidad ni prueba en dispositivo físico.
-
-Evidencias locales excluidas de Git: `evidence/qa-final-entrega-movil.png` y `evidence/qa-final-historial-archivado.png`. El viewport se restauró al finalizar; solo se cierra la vista previa usada para QA. Los servidores demo 5173 y Firebase 5174 se conservan.
-
-El commit incluye aplicación, lockfile, fuente de reglas, pruebas y documentación. **No publica Hosting, no actualiza reglas remotas, no concede accesos reales y no hace push.** Continúan pendientes el ingreso Google con UID, acceso inicial Developer, reglas actuales compiladas/publicadas y pruebas autenticadas de backend. Para operar, seguir [la preparación Firebase](firebase-setup.md) y confirmar el protocolo con UCSD.
+La publicación, autenticación real y pruebas locales tienen alcances distintos. Las restricciones locales pueden inspeccionarse/modificarse en el navegador y no ofrecen confidencialidad. El circuito backend QA vigente está aprobado; quedan los pendientes institucionales y operativos enumerados arriba antes de usar datos reales.

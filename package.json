@@ -8,6 +8,7 @@
     "dev:firebase": "vite --mode firebase --host 127.0.0.1 --port 5174",
     "build": "tsc -b && vite build",
     "build:firebase": "tsc -b && vite build --mode firebase --outDir dist-firebase",
+    "build:pruebas": "tsc -b && vite build --mode pruebas --outDir dist-pruebas",
     "typecheck": "tsc -b",
     "lint": "eslint .",
     "test": "node --test tests/*.test.ts",
