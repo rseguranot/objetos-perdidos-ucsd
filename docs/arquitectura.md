@@ -1,6 +1,6 @@
 # Arquitectura y mantenimiento
 
-Esta aplicación centraliza el catálogo de hallazgos y el registro interno de custodia. Tiene una demo local y dos destinos Firebase independientes: piloto institucional y QA aislado. No hay transferencia automática entre entornos. Hosting y reglas finales de ambos están publicados; login Google institucional y circuito SDK autenticado de objetos QA están comprobados. El piloto mantiene catálogo vacío, sin hallazgos reales.
+Esta aplicación centraliza el catálogo de hallazgos y el registro interno de custodia. Tiene una demo local y dos destinos Firebase independientes: piloto institucional y QA aislado. No hay transferencia automática entre entornos. Ambos Hosting tienen publicada la interfaz de paginación y reportes. El piloto contiene 50 ejemplos ficticios y ningún hallazgo real; sus campos derivados se actualizaron con respaldo previo. QA migró sus registros ficticios iniciales y aprobó el circuito SDK autenticado, 136 combinaciones de consulta y conteos completos de referencia.
 
 ## Organización del código
 
@@ -16,11 +16,16 @@ Esta aplicación centraliza el catálogo de hallazgos y el registro interno de c
 | `src/data/storage.ts`, `access-storage.ts` y `seed.ts` | Lectura y validación local, permisos simulados y ejemplos ficticios |
 | `src/data/firebase.ts`, `cloud.ts` y `mode.ts` | SDK, identidad Google/contraseña, consultas, escrituras y selección de entorno |
 | `src/data/firestore-records.ts` | Conversión entre fecha ISO del dominio y timestamp autoritativo de destino en Firestore; lectura de registros anteriores |
+| `src/data/pages.ts` y `src/domain/search-index.ts` | Paginación de 25 por cursor, consultas filtradas y construcción de términos/edificio/fechas derivadas |
+| `src/data/metrics.ts` | Agregaciones de estado, destinos, revisión vencida y reporte mensual/anual independientes de las páginas |
 | `src/domain/identity.ts` y `test-accounts.ts` | Verificación del proveedor del token y excepción limitada al proyecto QA |
 | `firebase/firestore.rules` y `firestore.pruebas.rules` | Reglas institucionales y variante exclusiva QA con identidades fijas |
+| `firebase/firestore.indexes.json` | Índices compuestos compartidos; publicados en QA, pendientes en piloto |
 | `tests/` | Pruebas del dominio, autorización, persistencia y regresiones |
 | `scripts/verify-firebase-public.mjs` | Comprobación anónima de solo lectura contra Firebase |
 | `scripts/verify-firebase-qa.mjs` | Circuito autenticado y denegaciones con las tres identidades fijas QA |
+| `scripts/backfill-search-index.mjs` | Simulación, inspección y eventual migración protegida de campos derivados; sin escritura por defecto |
+| `scripts/verify-capacity-qa.mjs` | Lecturas QA previstas para paginación, índices, agregados y separación público/interno |
 
 Las operaciones de dominio construyen un nuevo registro y su evento de historial. La capa de datos vuelve a comprobar la autorización antes de guardarlo. En Firebase las reglas son la barrera de seguridad; ocultar un botón o validar desde React solo mejora la interacción.
 
@@ -30,11 +35,11 @@ Cada objeto tiene un identificador estable y un código de consulta. Se clasific
 
 | Colección remota | Contenido | Lectura prevista |
 |---|---|---|
-| `publicItems` | `id`, `code`, `title`, `category`, `itemType`, `description`, `foundDate`, `foundLocation` y `status: disponible` | Visitantes, sin cuenta |
-| `privateItems` | Registro completo, recepción, custodia, detalles reservados, historial, responsables, entrega y destino | Personal autorizado; Registro consulta solo los creados por su UID |
+| `publicItems` | Campos publicables de objeto y metadatos derivados `buildingId` y `searchTerms`; nunca custodia, evidencia ni historial | Visitantes, sin cuenta |
+| `privateItems` | Registro completo, recepción, custodia, detalles reservados, historial, responsables, entrega, destino y campos derivados para búsquedas/métricas | Personal autorizado; Registro consulta solo los creados por su UID |
 | `access` | Correo, rol, estado activo y metadatos de actualización | Identidad institucional para su propio acceso; administración para gestionar la lista |
 
-`projectPublicItems` construye explícitamente los nueve campos públicos. Solo incluye objetos disponibles, recibidos, con fechas coherentes y custodia indicada, sin entrega ni destino final. No utiliza una copia del registro interno con campos ocultos. Aun así, el operador debe redactar la descripción pública sin incluir características reservadas, números de documentos o información personal.
+`projectPublicItems` construye los nueve campos visibles del catálogo. La proyección remota añade únicamente `buildingId` y `searchTerms`, derivados de esos campos públicos; `publicSearchTerms` interno no se copia como campo adicional. Solo incluye objetos disponibles, recibidos, con fechas coherentes y custodia indicada, sin entrega ni destino final. No utiliza una copia del registro interno con campos ocultos. Aun así, el operador debe redactar la descripción pública sin incluir características reservadas, números de documentos o información personal.
 
 La demo guarda el registro completo en el navegador, aunque muestre esa proyección pública. No ofrece confidencialidad ni autorización real frente a quien pueda inspeccionar el almacenamiento; debe contener únicamente ejemplos ficticios.
 
@@ -96,11 +101,17 @@ Los límites de texto del dominio coinciden con los máximos pertinentes de la f
 | Prueba de propiedad o constancia de destino | 2000 |
 | Referencia fotográfica externa | 300 |
 
-Las consultas remotas limitan a 500 documentos cada suscripción; no hay paginación implementada. Alcanzar 500 activa un aviso porque podrían existir más registros. Los filtros se aplican sobre lo cargado y las métricas del panel son totales de esa carga, no de toda la base remota. La fuente de reglas limita el historial a 1000 eventos por objeto; requiere un diseño posterior antes de superar ese tamaño. Las cuotas del plan Spark siguen siendo límites adicionales del servicio.
+La nueva capa remota pide **25 candidatos por consulta**, ordenados por `foundDate DESC` e ID como desempate; el filtro de revisión a 90 días usa `receivedDate DESC` e ID. El cursor conserva la posición de Firestore. El catálogo y el panel ofrecen Anterior/Siguiente y conservan páginas visitadas; al cambiar filtros o después de una escritura vuelven a la primera. La consulta exacta por código usa `where('code','==',...)`; el texto se normaliza sin acentos, consulta la primera palabra mediante `array-contains` y recorre candidatos hasta reunir 25 coincidencias de todas las palabras o agotar el resultado. Las fechas del hallazgo se filtran en Firestore y no solo en la página visible. La demo local sigue filtrando el conjunto guardado en el navegador.
+
+Las métricas remotas no se derivan de páginas: `getCountFromServer` cuenta estados, donaciones, remisiones, revisión de 90 días y eventos por mes del año elegido. `deliveryDate` y `dispositionDate` son fechas calendario de Santo Domingo derivadas de sellos de tiempo; `buildingId`, `searchTerms` y `publicSearchTerms` también son derivados. El reporte anterior a un backfill puede omitir registros antiguos en filtros por estos campos. Las agregaciones no tienen límite de 25 o 500 porque falsearían el total; reglas e índices específicos requieren pruebas remotas. Cada carga del reporte emite múltiples consultas y consume lecturas de entradas de índice dentro de la cuota Spark.
+
+Los 51 índices compuestos cubren las consultas implementadas y permanecen debajo del límite Spark de 200. En QA, las 136 combinaciones de consulta ensayadas pasaron sin índices faltantes. Se comprobó la primera página de 25 y la igualdad de las métricas con una referencia completa de 69 registros privados; las pruebas posteriores pueden aumentar esa cifra. La fuente de reglas limita el historial a 1000 eventos por objeto; requiere un diseño posterior antes de superar ese tamaño. Las cuotas del plan Spark siguen siendo límites adicionales del servicio. [Índices y unión de filtros de igualdad](https://firebase.google.com/docs/firestore/query-data/index-overview#use_index_merging), [agregaciones](https://firebase.google.com/docs/firestore/query-data/aggregation-queries).
 
 ## Configuración y recuperación
 
 El modo predeterminado es la demo, cuya compilación genera `dist/`. `dev:firebase` utiliza `.env.firebase.local`; `build:firebase` genera `dist-firebase/` y usa `firebase.json`. `build:pruebas` utiliza `.env.pruebas.local`, genera `dist-pruebas/` y corresponde a `firebase.pruebas.json`. Los archivos de entorno locales están excluidos de Git. Recrear configuración desde `.env.example`, siguiendo [Firebase setup](firebase-setup.md). Las contraseñas QA permanecen únicamente en TEMP fuera del repositorio. Nunca añadir credenciales privadas ni claves de servicio al frontend o a Git. Si falta configuración o falla Firebase, no se sustituyen datos remotos por ejemplos locales.
+
+La migración de campos derivados usa `scripts/backfill-search-index.mjs`: sin argumentos simula sobre ejemplos locales; `--inspect --project=...` lee el proyecto explícito usando OAuth administrativo; `--apply` comprueba proyecto, identidad, rol y facturación. Antes de escribir guarda un respaldo local excluido de Git y usa versiones de documento para evitar sobrescrituras concurrentes. En QA se aplicó a 60 registros ficticios tras guardar 88 documentos; en el piloto se aplicó a los 50 IDs ficticios esperados con respaldo de 80 documentos. No se alteraron estados, entregas ni historial. Ninguna compilación o commit ejecuta ese proceso.
 
 Para conservar o investigar datos de la demo:
 
@@ -110,12 +121,12 @@ Para conservar o investigar datos de la demo:
 4. Para una migración local revisada, mantener IDs, códigos e historial y validar el resultado con `parseItems`. Las clasificaciones antiguas se adaptan en memoria; la carga añade solo los ejemplos universitarios que faltan por ID. Las evidencias históricas no se rellenan con valores ficticios.
 5. Recordar que restablecer sustituye los objetos y conserva los permisos; no repara una lista de accesos inválida. No transferir almacenamiento local al backend sin un procedimiento explícito y verificado.
 
-Para Firebase, distinguir fuente, reglas realmente publicadas y proyecto de destino. Conservar referencia anterior antes de publicar y comprobar compilación, autorización y consistencia. Las reglas finales están publicadas en ambos proyectos y la lectura API de cada fuente activa coincide con su archivo. No trasladar la excepción QA al piloto. El commit local no publica reglas ni Hosting.
+Para Firebase, distinguir fuente, reglas realmente publicadas y proyecto de destino. Conservar referencia anterior antes de publicar y comprobar compilación, autorización y consistencia. QA tiene publicadas reglas e índices nuevos; el piloto conserva la publicación anterior. No asumir que el contenido actual de `firebase/firestore.rules` o `firebase/firestore.indexes.json` esté activo en el piloto. No trasladar la excepción QA al piloto. El commit local no publica reglas, índices ni Hosting.
 
 La evaluación de publicación/entrega alcanzaba el límite de 1000 expresiones de reglas, no fallaba la recepción. Se redujeron evaluaciones repetidas del rol e historial, se utilizó validación nativa de calendario y comparación mediante proyección pública, y se eliminaron comprobaciones `hasAll` redundantes donde la lectura directa ya exige los campos obligatorios. Se conservaron autorización, campos requeridos, coherencia público/privado e historial. El circuito SDK QA y sus denegaciones aprobaron con estas reglas. [Límites oficiales de reglas](https://firebase.google.com/docs/rules/rules-behavior).
 
 ## Verificación antes del piloto
 
-Ejecutar `npm ci`, `npm run test`, `npm run lint`, `npm run build`, `npm run build:firebase` y `npm run build:pruebas`; las compilaciones incluyen tipos. La revisión vigente aprobó 57 pruebas de Node, incluidas cuatro del campus, tres del codec y dos de reconocimiento de commit, tipos, lint y las tres compilaciones. La revisión independiente aprobó los cinco casos codec/matcher. Las pruebas locales verifican lógica y permisos simulados; el SDK QA verifica operaciones reales de su proyecto separado. La evidencia y los casos exactos se mantienen en [Verificación](verificacion.md).
+Ejecutar `npm ci`, `npm run test`, `npm run lint`, `npm run build`, `npm run build:firebase` y `npm run build:pruebas`; las compilaciones incluyen tipos. Una revisión anterior aprobó 57 pruebas de Node, tipos, lint y las tres compilaciones; otra verificó después estados ficticios en el piloto. Esos resultados no cubren todavía la nueva paginación y agregaciones. Las pruebas locales verifican lógica y permisos simulados; el SDK QA anterior verificó operaciones reales de su proyecto separado. La evidencia y los casos exactos se mantienen en [Verificación](verificacion.md).
 
 El piloto tiene Hosting y reglas finales publicados, login Google con UID real y acceso reservado activo comprobado. QA aprobó creación propia, recepción, publicación, lectura pública sin información privada, entrega identificada, retirada y archivo con historial, además de revocación con sesión abierta, restauración y las denegaciones documentadas. Donación y remisión remotas también aprobaron; los 14 cuadernos y la mochila de diagnóstico quedaron archivados. El catálogo QA mostró 28 públicos al cierre. Antes de introducir datos reales, faltan la evaluación de acceso institucional con contraseña y los acuerdos UCSD sobre responsables, protocolo y custodia externa. El circuito QA no demuestra automáticamente ese recorrido con la identidad institucional del piloto ni casos no enumerados.

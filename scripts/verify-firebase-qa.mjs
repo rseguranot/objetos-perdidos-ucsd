@@ -4,9 +4,10 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import { initializeApp, deleteApp } from 'firebase/app'
 import { getAuth, signInWithEmailAndPassword, signOut } from 'firebase/auth'
-import { collection, doc, deleteDoc, getDoc, getDocFromServer, getDocs, getFirestore, limit, query, serverTimestamp, setDoc, terminate, where, writeBatch } from 'firebase/firestore'
+import { collection, doc, deleteDoc, getCountFromServer, getDoc, getDocFromServer, getDocs, getFirestore, limit, query, serverTimestamp, setDoc, terminate, where, writeBatch } from 'firebase/firestore'
 import { decodeFirestoreRecord, encodeFirestoreRecord } from '../src/data/firestore-records.ts'
 import { archiveItem, createItem, deliverItem, disposeItem, projectPublicItems, publishItem, updateItem } from '../src/domain/catalog.ts'
+import { buildPrivateIndex, buildPublicIndex } from '../src/domain/search-index.ts'
 
 const projectId = 'ucsd-objetos-perdidos-pruebas'
 assert.equal(process.env.VITE_FIREBASE_PROJECT_ID, projectId, 'This script must never run against the pilot.')
@@ -18,7 +19,7 @@ const options = { projectId, apiKey: process.env.VITE_FIREBASE_API_KEY, appId: p
 const publicApp = initializeApp(options, 'qa-public')
 const connections = new Map()
 let auth = getAuth(publicApp), db = getFirestore(publicApp)
-const deadline = setTimeout(() => { console.error('QA verification exceeded 60 seconds.'); process.exit(1) }, 60_000)
+const deadline = setTimeout(() => { console.error('QA verification exceeded 120 seconds.'); process.exit(1) }, 120_000)
 const denied = async (operation, label) => { await assert.rejects(operation, error => error.code === 'permission-denied', label); console.log(`Denegado: ${label}.`) }
 const login = async role => {
   const account = accounts[role]
@@ -38,21 +39,24 @@ const login = async role => {
 }
 const persist = async (record, removePublic = false, encodeDates = true) => {
   const batch = writeBatch(db)
-  batch.set(doc(db, 'privateItems', record.id), { ...(encodeDates ? encodeFirestoreRecord(record) : record), updatedByUid: auth.currentUser.uid, updatedAt: serverTimestamp() })
+  const privateRecord = { ...record, ...buildPrivateIndex(record), updatedByUid: auth.currentUser.uid }
+  batch.set(doc(db, 'privateItems', record.id), { ...(encodeDates ? encodeFirestoreRecord(privateRecord) : privateRecord), updatedAt: serverTimestamp() })
   const projection = projectPublicItems([record])[0]
-  if (projection) batch.set(doc(db, 'publicItems', record.id), projection)
+  if (projection) batch.set(doc(db, 'publicItems', record.id), { ...projection, ...buildPublicIndex(projection) })
   else if (removePublic) batch.delete(doc(db, 'publicItems', record.id))
   await batch.commit()
 }
 try {
   const user = await login('registro')
   await getDocs(query(collection(db, 'privateItems'), where('createdByUid', '==', user.uid), limit(500)))
+  await getCountFromServer(query(collection(db, 'privateItems'), where('createdByUid', '==', user.uid)))
+  await denied(() => getCountFromServer(query(collection(db, 'privateItems'))), 'Registro no obtiene métricas de todos los objetos')
   console.log('Registro consulta sus objetos internos.')
   const draft = { title: 'Cuaderno · prueba de permisos', category: 'material_academico', itemType: 'cuaderno', description: 'Objeto ficticio de verificación remota.', foundDate: new Date().toISOString().slice(0, 10), foundLocation: 'Biblioteca', receivedDate: '', custodyLocation: '', privateDetails: 'Marca ficticia reservada.', received: false }
   let item = { ...createItem([], draft, accounts.registro.email), createdByUid: user.uid, updatedByUid: user.uid }
   item.code = `UCSD-QA-${item.id}`
   await persist(item)
-  console.log('Creacion remota aprobada.')
+  console.log(`Creacion remota aprobada. Objeto ficticio QA: ${item.id}.`)
   await getDocs(query(collection(db, 'privateItems'), where('createdByUid', '==', user.uid), limit(500)))
   await denied(() => getDocs(query(collection(db, 'privateItems'), limit(500))), 'Registro no consulta todos los objetos')
   await denied(() => getDocs(query(collection(db, 'access'), limit(500))), 'Registro no consulta roles')
@@ -63,9 +67,10 @@ try {
   assert.equal((await getDoc(doc(db, 'publicItems', item.id))).exists(), false)
   await login('decanato')
   await denied(() => getDocs(query(collection(db, 'access'), limit(500))), 'Decanato no administra roles')
+  assert.ok((await getCountFromServer(query(collection(db, 'privateItems')))).data().count >= 1)
   const storedDraft = (await getDocFromServer(doc(db, 'privateItems', item.id))).data()
   delete storedDraft.updatedAt
-  assert.deepEqual(storedDraft, item, 'The server draft must match the record before receipt.')
+  assert.deepEqual(storedDraft, { ...item, ...buildPrivateIndex(item) }, 'The server draft must match the indexed record before receipt.')
   item = updateItem(item, receivedDraft, accounts.decanato.email)
   await persist(item)
   console.log('Recepcion remota aprobada.')
@@ -89,8 +94,10 @@ try {
   }
   auth = getAuth(publicApp); db = getFirestore(publicApp)
   await denied(() => deleteDoc(doc(db, 'publicItems', item.id)), 'Visitante no elimina publicaciones')
+  assert.ok((await getCountFromServer(query(collection(db, 'publicItems')))).data().count >= 1)
   const publicRecord = await getDoc(doc(db, 'publicItems', item.id))
   assert.equal(publicRecord.data()?.title, draft.title)
+  assert.deepEqual(publicRecord.data(), { ...projectPublicItems([item])[0], ...buildPublicIndex(projectPublicItems([item])[0]) })
   assert.equal('privateDetails' in publicRecord.data(), false)
   assert.equal('custodyLocation' in publicRecord.data(), false)
   await denied(() => getDoc(doc(db, 'privateItems', item.id)), 'Visitante no consulta custodia')
@@ -109,6 +116,7 @@ try {
   assert.equal((await getDoc(doc(db, 'privateItems', item.id))).data()?.status, 'archivado')
   await login('admin')
   assert.ok((await getDocs(query(collection(db, 'access'), limit(500)))).size >= 3)
+  assert.ok((await getCountFromServer(query(collection(db, 'privateItems')))).data().count >= 1)
   const access = (email, role) => ({ email, role, active: true, updatedByUid: auth.currentUser.uid, updatedAt: serverTimestamp() })
   await denied(() => setDoc(doc(db, 'access', accounts.registro.email), access(accounts.registro.email, 'admin')), 'No cambia el rol fijo de una cuenta QA')
   await denied(() => setDoc(doc(db, 'access', 'rsegura20250554@ucsd.edu.do'), access('rsegura20250554@ucsd.edu.do', 'developer')), 'Administrador no concede Developer')

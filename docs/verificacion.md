@@ -2,28 +2,30 @@
 
 ## Estado vigente · 29 de septiembre de 2026
 
-Esta sección es la referencia actual. Las revisiones históricas siguientes documentan cómo se llegó a este estado; sus resultados locales no equivalen a pruebas de escritura remota.
+Esta sección distingue el estado actual de los proyectos de las comprobaciones históricas que se conservan más abajo.
 
 | Comprobación | Resultado actual |
 |---|---|
 | Google institucional real | Login completado en `https://ucsd-objetos-perdidos.firebaseapp.com` con `rsegura20250554@ucsd.edu.do`; UID comprobado en Authentication |
 | Developer | Documento explícito activo; sesión Developer y gestor Roles protegido comprobados en navegador |
-| Hosting institucional | Publicado en firebaseapp.com y web.app; catálogo institucional vacío, sin hallazgos reales |
-| Reglas institucionales | Versión final publicada, incluida optimización y fecha autoritativa; fuente activa leída por API coincide con el archivo |
+| Hosting institucional | Paginación y reportes publicados en firebaseapp.com y web.app; 50 objetos ficticios, 30 disponibles, sin hallazgos reales |
+| Reglas institucionales | Reglas de agregaciones y 51 índices compuestos publicados; índices confirmados `READY` |
 | Email/Password | Proveedor habilitado sin facturación; no se creó usuario institucional contraseña ni vínculo/reset automático |
-| QA aislado | Proyecto `ucsd-objetos-perdidos-pruebas`, Spark sin facturación, Hosting publicado y carga inicial de 37 ejemplos ficticios con 30 públicos |
+| QA aislado | Proyecto `ucsd-objetos-perdidos-pruebas`, Spark sin facturación; 60 registros ficticios migrados inicialmente con respaldo de 88 documentos; ensayos posteriores sumaron más registros |
 | Acceso QA en navegador | Login por contraseña y logout comprobados para Registro, Decanato y Administrador; Registro ve solo sus objetos y no Roles, Decanato ve tabla completa, Administrador ve tres accesos activos con roles fijos; catálogo final de 28 públicos comprobado |
-| Pruebas automatizadas | **57 de 57 aprobadas**, incluidas cuatro de campus, tres del codec Firestore y dos de reconocimiento de commit |
-| Tipos y análisis estático | Aprobados |
-| Compilaciones | Demo, piloto Firebase y QA aprobadas |
+| Pruebas automatizadas | **77 aprobadas** en la versión de capacidad |
+| Tipos y análisis estático | `npm run typecheck` y `npm run lint` aprobados |
+| Compilaciones | `npm run build:pruebas` y `npm run build:firebase` aprobados; Hosting desplegado desde esos resultados |
 | Circuito SDK QA | **Aprobado completo**, ejecución final con objeto ficticio `2979320c-f8b3-49e2-8605-aa73ab5f93f8`; transiciones, proyección pública, entrega, archivo, revocación y denegaciones descritas abajo |
 | Codec y destinos remotos | Timestamp autoritativo del servidor y lectura ISO/legacy validados; donación 0033 y remisión 0034 aprobadas con retirada pública |
-| Publicación final | Hosting con codec, 19 archivos por proyecto, y reglas finales publicados en piloto y QA |
+| Publicación anterior | Hosting con codec publicado en una fase histórica; la versión de capacidad ya está en ambos proyectos |
 | Parche posterior de reintento | Compilado, revisado y republicado en ambos Hosting, 19 archivos cada uno; nueva donación E2E UI aprobada, sin forzar otra pérdida de respuesta |
-| Anónimo institucional con reglas finales | Cinco comprobaciones aprobadas, 0 públicos; facturación deshabilitada verificada en ambos proyectos |
+| Anónimo institucional histórico | Cinco comprobaciones aprobadas cuando el catálogo estaba vacío; posteriormente se cargaron 50 ejemplos ficticios |
 | Campus y Roles compacto | Publicados y comprobados; filtros, guardado/recarga/edición, archivo con historial y Roles del piloto con Developer aprobados; QA 60 privados/28 públicos |
+| Capacidad QA nueva | 136 combinaciones de consulta sin fallo de índice; conteos y 12 meses comparados con 69 privados / 31 públicos del momento; página de 25, búsqueda, filtros y navegación web probados |
+| Capacidad piloto nueva | Backfill de 50 ejemplos y 80 documentos respaldados; reglas, índices y Hosting publicados; página pública de 25, total 30, segunda página y Documentos probados en URL |
 
-El circuito autenticado de objetos se probó mediante SDK contra el backend real QA. En navegador se verificaron por separado las sesiones y vistas de los tres roles. El piloto institucional tiene login Google y Roles protegido comprobados; no se declara el circuito completo de objetos probado con esa identidad institucional. Los resultados de QA pertenecen exclusivamente a su proyecto separado.
+La nueva capacidad se probó en QA con un conjunto sintético de 2501 registros en pruebas locales, 136 combinaciones remotas de índices y un reporte remoto comparado con todos los registros QA de ese momento. El circuito remoto de registro, recepción, publicación, entrega, archivo, donación y remisión pasó en QA; también se comprobaron denegaciones de roles. El piloto se verificó por consulta pública y navegador tras publicar. Estas pruebas no equivalen a uso institucional con datos reales, ni a una auditoría integral de accesibilidad o carga concurrente.
 
 Las tres cuentas QA `.invalid` usan contraseña y una excepción limitada a proyecto/token audience, UID/correo fijos y rol activo esperado. No simulan verificación de correo institucional ni permiten Developer. Las credenciales permanecen en un archivo TEMP fuera de Git; no se incluyen en este documento.
 
@@ -75,7 +77,7 @@ Al cierre de la revisión de donaciones, QA mostró 59 registros, 28 públicos, 
 
 La fuente final aprobó **57/57 pruebas**, lint y las tres compilaciones con tipos; `git diff --check` quedó limpio. Las cuatro pruebas nuevas cubren ubicaciones del campus. Se publicó en ambos Hosting y HTML/assets recuperados por HTTP coincidieron con las compilaciones locales. Es un cambio de presentación y texto `foundLocation`: no cambia esquema ni reglas, por lo que no se declara una nueva prueba completa de reglas backend.
 
-El SDK Firestore actualizó 30 ejemplos QA editables, preservando los siete cerrados e historial y proyección pública; el piloto sigue sin objetos. En navegador, EAL + búsqueda «EAL 206» devolvió dos resultados públicos y los mismos dos en administración. El formulario creó el borrador ficticio «Estuche · prueba edificio y aula» con `Edificio La Altagracia (EAL) · Aula 206`. Recarga y edición recuperaron «Aula 206» exacto. Se archivó el registro de prueba conservando historial: QA quedó con 60 privados y 28 públicos.
+El SDK Firestore actualizó 30 ejemplos QA editables, preservando los siete cerrados e historial y proyección pública; **en esa fecha** el piloto aún no tenía objetos, pero posteriormente recibió 50 ejemplos ficticios. En navegador, EAL + búsqueda «EAL 206» devolvió dos resultados públicos y los mismos dos en administración. El formulario creó el borrador ficticio «Estuche · prueba edificio y aula» con `Edificio La Altagracia (EAL) · Aula 206`. Recarga y edición recuperaron «Aula 206» exacto. Se archivó el registro de prueba conservando historial: QA quedó con 60 privados y 28 públicos.
 
 Roles del piloto, con Developer real, mostró formulario y tabla sin introducción, avisos técnicos ni tarjetas de explicación. El DOM a ancho 390 no desbordó horizontalmente (`documentWidth <= 390`) y se retiró la emulación. La captura móvil del navegador integrado está escalada: se conserva como evidencia complementaria, sin declararla aprobación visual completa ni prueba en un teléfono físico.
 
@@ -181,3 +183,11 @@ El estado vigente del piloto es 50 objetos ficticios: 5 borradores, 30 disponibl
 La fuente y el piloto ya tenían eliminado «Aula o lugar específico», pero Hosting QA aún servía `AdminPanel-D_WNrcVQ.js`, que contenía ese campo. Se publicó en QA el build de pruebas validado de e2c8a4b, con 21 archivos, sin escrituras de datos ni cambios de reglas/permisos. HTML, recursos iniciales y AdminPanel de los dos dominios QA coinciden byte a byte con `dist-pruebas`.
 
 En la pestaña institucional actual, el formulario de edición de UCSD-DEMO-0002 muestra solo el selector de edificio y Descripción pública; la descripción incluye «Lugar del hallazgo: Aula 206.». Se cerró sin guardar. Captura: `evidence/form-building-description-confirmed.png`. Los detalles anteriores se conservan en descripción al editar y guardar; no se migraron registros cerrados ni se sobrescribieron datos de los objetos. Una pestaña que conserve una versión anterior debe recargarse para obtener el formulario vigente.
+
+## Paginación, búsqueda y métricas · preparación actual
+
+La fuente reemplaza la antigua suscripción de hasta 500 documentos como base de los filtros por consultas de **25 documentos con cursor**. Público e interno tienen páginas Anterior/Siguiente; código exacto, categoría, tipo, edificio, estado, destino y fechas se aplican en Firestore. Texto usa una primera palabra normalizada en `searchTerms` y comprueba las siguientes recorriendo candidatos. Los totales de estado, revisión a 90 días, donaciones/remisiones y el reporte por meses del año seleccionado usan agregaciones independientes de la página. La demo local sigue usando su conjunto del navegador.
+
+`firebase/firestore.indexes.json` declara 51 índices compuestos para las dos configuraciones Firebase. QA publicó reglas, índices y Hosting. `scripts/backfill-search-index.mjs` migró **60 registros ficticios QA**, con respaldo previo de **88 documentos**. Las pruebas de 136 combinaciones no encontraron índices faltantes; `scripts/verify-capacity-qa.mjs` comparó todas las métricas con una referencia completa de **69 privados / 31 públicos** de ese momento, con primera página de **25**. El circuito SDK remoto volvió a pasar después del ajuste final de reglas, incluidas donación y remisión. En el piloto se migraron los 50 ejemplos ficticios con respaldo de 80 documentos; los 51 índices se confirmaron `READY` antes de publicar reglas y Hosting. Su URL mostró 30 disponibles, primera página de 25, segunda página y filtro Documentos.
+
+Riesgo conocido: `countOrLimitedQuery()` permite consultas sin `limit` para que pasen `count()`; la misma condición admite lecturas normales sin límite sobre documentos ya autorizados. La UI pide 25 por página y no descarga todo de forma habitual, pero esto no es un límite impuesto al cliente. Firestore puede descontar más lecturas y agotar Spark si alguien repite consultas amplias. Antes de uso real, UCSD debe definir supervisión de cuotas y continuidad. La cuenta de servicio permanece sin facturación.

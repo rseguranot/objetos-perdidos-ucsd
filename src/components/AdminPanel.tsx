@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import Chip from '@mui/material/Chip'
@@ -26,14 +26,21 @@ import SearchRounded from '@mui/icons-material/SearchRounded'
 import InputAdornment from '@mui/material/InputAdornment'
 import CategoryIcon from './CategoryIcon'
 import DateRangeFilter from './DateRangeFilter'
+import type { PageResult } from './PublicCatalog'
+import type { StaffMetrics } from '../data/metrics'
 import { CAMPUS_NAMES, LEGACY_LOCATION, joinFoundLocation, locationForEditing } from '../domain/campus'
 import { archiveItem, canDispose, CATEGORY_LABELS, createItem, deliverItem, disposeItem, filterInternalItems, publishItem, retentionInfo, STATUS_LABELS, TYPE_LABELS, typesForCategory, updateItem } from '../domain/catalog'
-import type { Category, DeliveryInput, IdentityType, ItemDraft, ItemType, LostItem } from '../domain/types'
+import type { Category, DeliveryInput, IdentityType, InternalFilters, ItemDraft, ItemType, LostItem } from '../domain/types'
 import { canEdit, canReceive, ROLE_LABELS, type Session } from '../domain/roles'
 import { todayISO } from '../date'
 
 type Commit = (next: LostItem[], message: string) => Promise<void>
 const statusColors = { borrador: 'default', disponible: 'success', entregado: 'info', archivado: 'default' } as const
+function santoDomingoDate(instant?: string): string | undefined {
+  if (!instant) return undefined
+  const time = Date.parse(instant)
+  return Number.isNaN(time) ? undefined : new Date(time - 4 * 60 * 60 * 1000).toISOString().slice(0, 10)
+}
 
 function ItemForm({ item, items, session, onCommit, onClose }: { item: LostItem | null; items: LostItem[]; session: Session; demo: boolean; onCommit: Commit; onClose: () => void }) {
   const [draft, setDraft] = useState<ItemDraft>(item ? { title: item.title, category: item.category, itemType: item.itemType, description: locationForEditing(item.foundLocation, item.description).description, foundDate: item.foundDate, foundLocation: item.foundLocation, received: item.received, receivedDate: item.receivedDate, custodyLocation: item.custodyLocation, privateDetails: item.privateDetails } : { title: '', category: 'electronica', itemType: 'otro', description: '', foundDate: todayISO(), foundLocation: '', received: false, receivedDate: '', custodyLocation: '', privateDetails: '' })
@@ -112,8 +119,24 @@ function DispositionForm({ item, onSave, onClose }: { item: LostItem; demo: bool
   </DialogContent><DialogActions><Button disabled={saving} onClick={onClose}>Cancelar</Button><Button disabled={saving || !confirmed} variant="contained" type="submit">{saving ? 'Guardando…' : documents ? 'Confirmar remisión' : 'Confirmar donación'}</Button></DialogActions></form></Dialog>
 }
 
-export default function AdminPanel({ items, session, demo, onCommit, blocked }: { items: LostItem[]; session: Session; demo: boolean; onCommit: Commit; blocked: boolean }) {
+interface AdminPanelProps {
+  items: LostItem[]
+  session: Session
+  demo: boolean
+  onCommit: Commit
+  blocked: boolean
+  loadPage?: (filters: InternalFilters, cursor: unknown | null) => Promise<PageResult<LostItem>>
+  loadItem?: (id: string) => Promise<LostItem>
+  onItemsLoaded?: (items: LostItem[]) => void
+  metrics?: StaffMetrics
+  reportYear?: number
+  onReportYearChange?: (year: number) => void
+  refreshToken?: number
+}
+
+export default function AdminPanel({ items, session, demo, onCommit, blocked, loadPage, loadItem, onItemsLoaded, metrics, reportYear, onReportYearChange, refreshToken = 0 }: AdminPanelProps) {
   const [query, setQuery] = useState('')
+  const [remoteQuery, setRemoteQuery] = useState('')
   const [status, setStatus] = useState('')
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
@@ -128,25 +151,108 @@ export default function AdminPanel({ items, session, demo, onCommit, blocked }: 
   const [inspecting, setInspecting] = useState<LostItem | null>(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [page, setPage] = useState(1)
+  const [remotePages, setRemotePages] = useState<{ key: string; pages: PageResult<LostItem>[] }>({ key: '', pages: [] })
+  const [remoteLoading, setRemoteLoading] = useState(false)
+  const [remoteError, setRemoteError] = useState('')
+  const [retryNonce, setRetryNonce] = useState(0)
+  const [localReportYear, setLocalReportYear] = useState(Number(todayISO().slice(0, 4)))
+  const selectedYear = reportYear ?? localReportYear
+  const requestVersion = useRef(0)
+  const onItemsLoadedRef = useRef(onItemsLoaded)
+  useEffect(() => { onItemsLoadedRef.current = onItemsLoaded }, [onItemsLoaded])
   const receiveAllowed = canReceive(session)
+  useEffect(() => { const timer = window.setTimeout(() => setRemoteQuery(query), 350); return () => window.clearTimeout(timer) }, [query])
   const invalidDates = Boolean(from && to && from > to)
-  const filtered = filterInternalItems(items, { query, status, from, to, building, category, itemType, disposition: destination })
-  const reviewCount = filterInternalItems(items, { query: '', status: '', from: '', to: '', disposition: 'pendiente90' }).length
-  const donatedCount = items.filter(item => item.disposition?.kind === 'donacion').length
-  const remittedCount = items.filter(item => item.disposition?.kind === 'remision_documentos').length
-  function destinationFilter(value: typeof destination) { setDestination(destination === value ? '' : value); setStatus('') }
-  function clearFilters() { setQuery(''); setStatus(''); setFrom(''); setTo(''); setBuilding(''); setDestination(''); setCategory(''); setItemType('') }
-  async function transition(next: LostItem, message: string) { await onCommit(items.map(item => item.id === next.id ? next : item), message); setError('') }
+  const filters = useMemo<InternalFilters>(() => ({ query: loadPage ? remoteQuery : query, status, from, to, building, category, itemType, disposition: destination }), [loadPage, remoteQuery, query, status, from, to, building, category, itemType, destination])
+  const filterKey = JSON.stringify(filters) + `:${refreshToken}:${retryNonce}`
+  useEffect(() => {
+    if (!loadPage) return
+    const version = ++requestVersion.current
+    onItemsLoadedRef.current?.([])
+    if (invalidDates) {
+      queueMicrotask(() => { if (version === requestVersion.current) { setRemoteLoading(false); setRemoteError('') } })
+      return
+    }
+    queueMicrotask(() => { if (version === requestVersion.current) { setRemoteLoading(true); setRemoteError('') } })
+    void loadPage(filters, null).then(result => {
+      if (version !== requestVersion.current) return
+      setRemotePages({ key: filterKey, pages: [result] })
+      onItemsLoadedRef.current?.(result.items)
+      setPage(1)
+      setRemoteLoading(false)
+    }).catch(cause => {
+      if (version !== requestVersion.current) return
+      setRemoteError(cause instanceof Error ? cause.message : 'No se pudieron cargar los registros.')
+      setRemoteLoading(false)
+    })
+    return () => { if (requestVersion.current === version) requestVersion.current = version + 1 }
+  }, [loadPage, filterKey, filters, invalidDates])
+  const currentPages = remotePages.key === filterKey ? remotePages.pages : []
+  const currentPage = currentPages[page - 1]
+  const loadedItems = currentPages.flatMap(part => part.items)
+  const filtered = loadPage ? currentPage?.items ?? [] : filterInternalItems(items, filters)
+  const actionItems = loadPage ? loadedItems : items
+  const remoteHasMore = Boolean(currentPage?.hasMore || currentPages[page])
+  const reviewCount = metrics ? metrics.reviewOverdue : filterInternalItems(items, { query: '', status: '', from: '', to: '', disposition: 'pendiente90' }).length
+  const donatedCount = metrics ? metrics.donationsTotal : items.filter(item => item.disposition?.kind === 'donacion').length
+  const remittedCount = metrics ? metrics.remissionsTotal : items.filter(item => item.disposition?.kind === 'remision_documentos').length
+  const localReport = useMemo(() => {
+    const months = Array.from({ length: 12 }, (_, index) => ({ month: index + 1, hallazgos: 0, entregas: 0, donaciones: 0, remisiones: 0 }))
+    for (const item of items) {
+      const add = (date: string | undefined, field: 'hallazgos' | 'entregas' | 'donaciones' | 'remisiones') => {
+        if (date?.startsWith(`${selectedYear}-`)) {
+          const month = Number(date.slice(5, 7))
+          if (month >= 1 && month <= 12) months[month - 1][field]++
+        }
+      }
+      add(item.foundDate, 'hallazgos')
+      add(santoDomingoDate(item.delivery?.deliveredAt), 'entregas')
+      add(santoDomingoDate(item.disposition?.kind === 'donacion' ? item.disposition.completedAt : undefined), 'donaciones')
+      add(santoDomingoDate(item.disposition?.kind === 'remision_documentos' ? item.disposition.completedAt : undefined), 'remisiones')
+    }
+    return { months, annual: months.reduce((total, month) => ({ hallazgos: total.hallazgos + month.hallazgos, entregas: total.entregas + month.entregas, donaciones: total.donaciones + month.donaciones, remisiones: total.remisiones + month.remisiones }), { hallazgos: 0, entregas: 0, donaciones: 0, remisiones: 0 }) }
+  }, [items, selectedYear])
+  const report = loadPage ? metrics?.year === selectedYear ? metrics : null : localReport
+  const currentYear = Number(todayISO().slice(0, 4))
+  const reportYears = Array.from(new Set([selectedYear, ...Array.from({ length: currentYear - 2000 + 1 }, (_, index) => currentYear - index), ...(!loadPage ? items.map(item => Number(item.foundDate.slice(0, 4))) : [])])).filter(year => Number.isInteger(year) && year >= 2000 && year <= 9998).sort((a, b) => b - a)
+  function changeYear(year: number) { if (onReportYearChange) onReportYearChange(year); else setLocalReportYear(year) }
+  function destinationFilter(value: typeof destination) { setDestination(destination === value ? '' : value); setStatus(''); setPage(1) }
+  function clearFilters() { setQuery(''); setStatus(''); setFrom(''); setTo(''); setBuilding(''); setDestination(''); setCategory(''); setItemType(''); setPage(1) }
+  async function nextRemotePage() {
+    if (!loadPage || remoteLoading || !currentPage) return
+    if (currentPages[page]) { setPage(page + 1); return }
+    if (!currentPage.hasMore) return
+    const version = requestVersion.current
+    setRemoteLoading(true); setRemoteError('')
+    try {
+      const result = await loadPage(filters, currentPage.cursor)
+      if (version !== requestVersion.current) return
+      setRemotePages(previous => previous.key === filterKey ? { key: filterKey, pages: [...previous.pages, result] } : previous)
+      onItemsLoadedRef.current?.([...loadedItems, ...result.items])
+      setPage(page + 1)
+    } catch (cause) {
+      if (version === requestVersion.current) setRemoteError(cause instanceof Error ? cause.message : 'No se pudo cargar la siguiente página.')
+    } finally { if (version === requestVersion.current) setRemoteLoading(false) }
+  }
+  async function transition(next: LostItem, message: string) { await onCommit(actionItems.map(item => item.id === next.id ? next : item), message); setError('') }
   async function action(run: () => Promise<void>) { try { setBusy(true); await run() } catch (cause) { setError(cause instanceof Error ? cause.message : 'No se pudo completar la operación.') } finally { setBusy(false) } }
+  function openItem(item: LostItem, setter: (item: LostItem) => void) {
+    void action(async () => setter(loadItem ? await loadItem(item.id) : item))
+  }
   return <section className="admin-section" aria-labelledby="admin-title">
     <div className="section-heading"><div><span className="eyebrow">{ROLE_LABELS[session.role!]}</span><h1 id="admin-title">Gestión de objetos</h1></div><Button variant="contained" startIcon={<AddRounded />} disabled={blocked || busy} onClick={() => setEditing(null)}>Registrar objeto</Button></div>
 
-    <div className="admin-stats">{Object.entries(STATUS_LABELS).map(([key, label]) => <button key={key} className={`admin-stat ${status === key ? 'selected' : ''}`} onClick={() => { setStatus(status === key ? '' : key); setDestination('') }} aria-pressed={status === key}><span>{label}</span><strong>{items.filter(item => item.status === key).length}</strong><span>{key === 'borrador' ? 'Por confirmar' : key === 'disponible' ? 'En el catálogo público' : key === 'entregado' ? 'Devueltos a su dueño' : 'Historial conservado'}</span></button>)}</div>
+    <div className="admin-stats">{Object.entries(STATUS_LABELS).map(([key, label]) => <button key={key} className={`admin-stat ${status === key ? 'selected' : ''}`} onClick={() => { setStatus(status === key ? '' : key); setDestination(''); setPage(1) }} aria-pressed={status === key}><span>{label}</span><strong>{metrics ? metrics.status[key as keyof StaffMetrics['status']] : loadPage ? '—' : items.filter(item => item.status === key).length}</strong><span>{key === 'borrador' ? 'Por confirmar' : key === 'disponible' ? 'En el catálogo público' : key === 'entregado' ? 'Devueltos a su dueño' : 'Historial conservado'}</span></button>)}</div>
     {receiveAllowed && <div className="retention-section"><p><strong>Plazo de custodia</strong></p><div className="retention-stats">
-      <button className={`admin-stat ${destination === 'pendiente90' ? 'selected' : ''}`} aria-pressed={destination === 'pendiente90'} onClick={() => destinationFilter('pendiente90')}><span>Plazo cumplido</span><strong>{reviewCount}</strong><span>Pendientes de revisión</span></button>
-      <button className={`admin-stat ${destination === 'donacion' ? 'selected' : ''}`} aria-pressed={destination === 'donacion'} onClick={() => destinationFilter('donacion')}><span>Donados</span><strong>{donatedCount}</strong><span>Destino y constancia registrados</span></button>
-      <button className={`admin-stat ${destination === 'remision_documentos' ? 'selected' : ''}`} aria-pressed={destination === 'remision_documentos'} onClick={() => destinationFilter('remision_documentos')}><span>Documentos remitidos</span><strong>{remittedCount}</strong><span>A la institución emisora</span></button>
+      <button className={`admin-stat ${destination === 'pendiente90' ? 'selected' : ''}`} aria-pressed={destination === 'pendiente90'} onClick={() => destinationFilter('pendiente90')}><span>Plazo cumplido</span><strong>{loadPage && !metrics ? '—' : reviewCount}</strong><span>Pendientes de revisión</span></button>
+      <button className={`admin-stat ${destination === 'donacion' ? 'selected' : ''}`} aria-pressed={destination === 'donacion'} onClick={() => destinationFilter('donacion')}><span>Donados</span><strong>{loadPage && !metrics ? '—' : donatedCount}</strong><span>Destino y constancia registrados</span></button>
+      <button className={`admin-stat ${destination === 'remision_documentos' ? 'selected' : ''}`} aria-pressed={destination === 'remision_documentos'} onClick={() => destinationFilter('remision_documentos')}><span>Documentos remitidos</span><strong>{loadPage && !metrics ? '—' : remittedCount}</strong><span>A la institución emisora</span></button>
     </div></div>}
+    <section className="staff-report" aria-labelledby="staff-report-title">
+      <div className="staff-report-heading"><div><h2 id="staff-report-title">Reporte anual</h2><p>Hallazgos por fecha de hallazgo; entregas y destinos por fecha registrada.</p></div><TextField select size="small" label="Año del reporte" value={selectedYear} onChange={event => changeYear(Number(event.target.value))} slotProps={{ inputLabel: { shrink: true } }}>{reportYears.map(year => <MenuItem key={year} value={year}>{year}</MenuItem>)}</TextField></div>
+      {report ? <><div className="staff-report-totals"><span>Hallazgos <strong>{report.annual.hallazgos}</strong></span><span>Entregas <strong>{report.annual.entregas}</strong></span><span>Donaciones <strong>{report.annual.donaciones}</strong></span><span>Remisiones <strong>{report.annual.remisiones}</strong></span></div><TableContainer className="admin-table"><Table size="small" aria-label={`Reporte mensual de ${selectedYear}`}><TableHead><TableRow><TableCell>Mes</TableCell><TableCell align="right">Hallazgos</TableCell><TableCell align="right">Entregas</TableCell><TableCell align="right">Donaciones</TableCell><TableCell align="right">Remisiones</TableCell></TableRow></TableHead><TableBody>{report.months.map(month => <TableRow key={month.month}><TableCell>{new Intl.DateTimeFormat('es-DO', { month: 'long', timeZone: 'UTC' }).format(new Date(Date.UTC(selectedYear, month.month - 1, 1)))}</TableCell><TableCell align="right">{month.hallazgos}</TableCell><TableCell align="right">{month.entregas}</TableCell><TableCell align="right">{month.donaciones}</TableCell><TableCell align="right">{month.remisiones}</TableCell></TableRow>)}</TableBody></Table></TableContainer></> : <p role="status">Cargando métricas del año seleccionado…</p>}
+    </section>
     {error && <Alert severity="error" onClose={() => setError('')} className="form-alert">{error}</Alert>}
     <div className="admin-filters"><div className="admin-classification">
       <TextField select label="Categoría" value={category} onChange={event => { setCategory(event.target.value as Category | ''); setItemType('') }}><MenuItem value="">Todas las categorías</MenuItem>{Object.entries(CATEGORY_LABELS).map(([key, label]) => <MenuItem key={key} value={key}>{label}</MenuItem>)}</TextField>
@@ -157,7 +263,9 @@ export default function AdminPanel({ items, session, demo, onCommit, blocked }: 
       {receiveAllowed && <TextField select label="Seguimiento / destino" value={destination} onChange={event => setDestination(event.target.value as typeof destination)}><MenuItem value="">Todos</MenuItem><MenuItem value="pendiente90">90 días · pendiente de revisión</MenuItem><MenuItem value="donacion">Donación registrada</MenuItem><MenuItem value="remision_documentos">Remisión a su emisor</MenuItem></TextField>}
     </div><TextField select label="Edificio o lugar" value={building} onChange={e => setBuilding(e.target.value)} fullWidth sx={{ mb: 2 }}><MenuItem value="">Todos los edificios y lugares</MenuItem>{CAMPUS_NAMES.map(name => <MenuItem key={name} value={name}>{name}</MenuItem>)}<MenuItem value={LEGACY_LOCATION}>Ubicación sin edificio identificado</MenuItem></TextField><DateRangeFilter from={from} to={to} onChange={(nextFrom, nextTo) => { setFrom(nextFrom); setTo(nextTo) }} />
     {invalidDates && <Alert severity="warning" className="date-warning">La fecha inicial debe ser anterior o igual a la fecha final.</Alert>}
-    <div className="admin-results" role="status" aria-live="polite"><span>{invalidDates ? 'Revisa el rango de fechas' : `${filtered.length} ${filtered.length === 1 ? 'registro' : 'registros'}`}</span>{Boolean(query || status || from || to || building || destination || category || itemType) && <Button size="small" onClick={clearFilters}>Limpiar filtros</Button>}</div></div>
+    <div className="admin-results" role="status" aria-live="polite"><span>{invalidDates ? 'Revisa el rango de fechas' : loadPage ? remoteLoading && !currentPage ? 'Buscando registros…' : `${filtered.length} ${filtered.length === 1 ? 'registro' : 'registros'} en esta página${remoteHasMore ? ' · hay más resultados' : ''}` : `${filtered.length} ${filtered.length === 1 ? 'registro' : 'registros'}`}</span>{Boolean(query || status || from || to || building || destination || category || itemType) && <Button size="small" onClick={clearFilters}>Limpiar filtros</Button>}</div></div>
+    {remoteError && <Alert severity="error" role="alert" className="form-alert">{remoteError} <Button size="small" onClick={() => setRetryNonce(current => current + 1)}>Reintentar</Button></Alert>}
+    {remoteLoading && !currentPage && <p role="status">Cargando registros…</p>}
     <TableContainer className="admin-table"><Table aria-label="Registro interno de objetos perdidos" size="small"><TableHead><TableRow><TableCell>Objeto / código</TableCell><TableCell>Hallazgo</TableCell><TableCell>Estado</TableCell><TableCell>Plazo de custodia</TableCell><TableCell>Custodia / destino</TableCell><TableCell>Acciones</TableCell></TableRow></TableHead><TableBody>{filtered.map(item => {
       const retention = retentionInfo(item)
       return <TableRow key={item.id}>
@@ -167,16 +275,17 @@ export default function AdminPanel({ items, session, demo, onCommit, blocked }: 
         <TableCell>{item.disposition ? 'Destino final registrado' : item.delivery ? 'Devolución registrada' : !retention ? 'Desde recepción confirmada' : <><span className={retention.overdue ? 'retention-overdue' : ''}>{retention.overdue ? '90 días cumplidos · revisar' : `${retention.remainingDays} días restantes`}</span><span className="table-subtitle">Revisión: {retention.dueDate.split('-').reverse().join('/')}</span>{item.category === 'dinero' && retention.overdue && <span className="table-subtitle">Efectivo · procedimiento especial pendiente</span>}</>}</TableCell>
         <TableCell>{item.disposition ? item.disposition.recipient : item.delivery ? 'Entregado al receptor' : item.custodyLocation || 'Pendiente de confirmar'}</TableCell>
         <TableCell><div className="table-actions">
-          {canEdit(session, item) && <Button size="small" disabled={blocked || busy} startIcon={<EditOutlined />} onClick={() => setEditing(item)}>Editar</Button>}
+          {canEdit(session, item) && <Button size="small" disabled={blocked || busy} startIcon={<EditOutlined />} onClick={() => openItem(item, setEditing)}>Editar</Button>}
           {receiveAllowed && item.status === 'borrador' && <Button size="small" disabled={blocked || busy} startIcon={<PublishOutlined />} onClick={() => { void action(() => transition(publishItem(item, session.email), 'Objeto publicado en el catálogo.')) }}>Publicar</Button>}
-          {receiveAllowed && item.status === 'disponible' && <Button size="small" disabled={blocked || busy} startIcon={<TaskAltRounded />} onClick={() => setDelivering(item)}>Entregar</Button>}
-          {receiveAllowed && canDispose(item) && <Button size="small" disabled={blocked || busy} onClick={() => setDisposing(item)}>{item.category === 'documentos' ? 'Remitir documento' : 'Donar'}</Button>}
-          <Button size="small" startIcon={<HistoryRounded />} onClick={() => setInspecting(item)}>Historial</Button>
-          {receiveAllowed && item.status !== 'archivado' && <Button size="small" disabled={blocked || busy} startIcon={<ArchiveOutlined />} onClick={() => setArchiving(item)}>Archivar</Button>}
+          {receiveAllowed && item.status === 'disponible' && <Button size="small" disabled={blocked || busy} startIcon={<TaskAltRounded />} onClick={() => openItem(item, setDelivering)}>Entregar</Button>}
+          {receiveAllowed && canDispose(item) && <Button size="small" disabled={blocked || busy} onClick={() => openItem(item, setDisposing)}>{item.category === 'documentos' ? 'Remitir documento' : 'Donar'}</Button>}
+          <Button size="small" startIcon={<HistoryRounded />} onClick={() => openItem(item, setInspecting)}>Historial</Button>
+          {receiveAllowed && item.status !== 'archivado' && <Button size="small" disabled={blocked || busy} startIcon={<ArchiveOutlined />} onClick={() => openItem(item, setArchiving)}>Archivar</Button>}
         </div></TableCell>
       </TableRow>
-    })}{!filtered.length && <TableRow><TableCell colSpan={6}>No hay registros para estos filtros.</TableCell></TableRow>}</TableBody></Table></TableContainer>
-    {editing !== undefined && <ItemForm key={editing?.id ?? 'new'} item={editing} items={items} session={session} demo={demo} onCommit={onCommit} onClose={() => setEditing(undefined)} />}
+    })}{!filtered.length && !remoteLoading && !remoteError && <TableRow><TableCell colSpan={6}>No hay registros para estos filtros.</TableCell></TableRow>}</TableBody></Table></TableContainer>
+    {loadPage && currentPage && <div className="load-more" role="group" aria-label="Paginación del registro interno"><Button variant="outlined" disabled={page === 1 || remoteLoading} onClick={() => setPage(page - 1)}>Anterior</Button><span>Página {page}</span><Button variant="outlined" disabled={!remoteHasMore || remoteLoading} onClick={() => { void nextRemotePage() }}>Siguiente</Button></div>}
+    {editing !== undefined && <ItemForm key={editing?.id ?? 'new'} item={editing} items={actionItems} session={session} demo={demo} onCommit={onCommit} onClose={() => setEditing(undefined)} />}
     {delivering && <DeliveryForm item={delivering} demo={demo} onClose={() => setDelivering(null)} onSave={async delivery => { await transition(deliverItem(delivering, delivery, session.email), 'Entrega registrada. El objeto ya no aparece como disponible.'); setDelivering(null) }} />}
     {disposing && <DispositionForm item={disposing} demo={demo} onClose={() => setDisposing(null)} onSave={async (recipient, reference) => { await transition(disposeItem(disposing, { kind: disposing.category === 'documentos' ? 'remision_documentos' : 'donacion', recipient, reference }, session.email), 'Destino final registrado. El objeto se archivó y su historial se conserva.'); setDisposing(null) }} />}
     <Dialog open={Boolean(archiving)} onClose={() => !busy && setArchiving(null)} aria-labelledby="archive-title"><DialogTitle id="archive-title">¿Archivar este registro?</DialogTitle><DialogContent><p>{archiving?.title} · {archiving?.code}</p><p>Dejará de aparecer en el catálogo. Los datos y el historial se conservarán en el panel interno. Archivar no registra una donación.</p></DialogContent><DialogActions><Button disabled={busy} onClick={() => setArchiving(null)}>Cancelar</Button><Button variant="contained" disabled={busy || blocked} onClick={() => { void action(async () => { if (archiving) { await transition(archiveItem(archiving, session.email), 'Registro archivado.'); setArchiving(null) } }) }}>Confirmar archivo</Button></DialogActions></Dialog>

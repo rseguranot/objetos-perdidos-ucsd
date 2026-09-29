@@ -2,15 +2,15 @@
 
 Estado actual: el piloto `ucsd-objetos-perdidos` está publicado y conectado. Se comprobó ingreso Google real de `rsegura20250554@ucsd.edu.do` en [firebaseapp.com](https://ucsd-objetos-perdidos.firebaseapp.com), UID en Authentication y permiso Developer explícito activo. Roles carga de forma protegida. El catálogo institucional contiene 50 objetos ficticios UCSD-DEMO cargados con autorización el 29/09/2026. No se incorporaron hallazgos reales; ver [carga del piloto](carga-piloto.md).
 
-El piloto conserva Spark sin facturación, aplicación web registrada, Firestore Standard `(default)` en `nam5` y Authentication con Google y Email/Password habilitados. Las reglas finales, incluida optimización y fecha autoritativa, están publicadas en piloto y QA; las fuentes activas leídas por API coinciden con los archivos de cada entorno. Hosting final publicó 19 archivos en cada proyecto, con el codec y etiqueta QA corregida. Ambos conservan `billingEnabled: false` y proveedor contraseña habilitado. Los intentos previos con popup cerrado o retorno anónimo quedan como antecedentes; no describen el acceso actual.
+El piloto conserva Spark sin facturación, aplicación web registrada, Firestore Standard `(default)` en `nam5` y Authentication con Google y Email/Password habilitados. QA publicó reglas, índices y Hosting de la nueva capacidad y migró datos ficticios. El piloto recibió el backfill de sus 50 ejemplos con respaldo de 80 documentos. Se verificó `billingEnabled: false` antes de aplicarlo. Los intentos previos con popup cerrado o retorno anónimo quedan como antecedentes; no describen el acceso actual.
 
 ## Entornos y configuración
 
 | Entorno | Configuración y compilación | Reglas y destino |
 |---|---|---|
 | Demo local | Sin configuración remota; `npm run build` → `dist` | localStorage; identidades simuladas |
-| Piloto institucional | `.env.firebase.local`; `npm run build:firebase` → `dist-firebase` | `firebase.json`, `firebase/firestore.rules`; proyecto `ucsd-objetos-perdidos` |
-| QA aislado | `.env.pruebas.local`; `npm run build:pruebas` → `dist-pruebas` | `firebase.pruebas.json`, `firebase/firestore.pruebas.rules`; proyecto `ucsd-objetos-perdidos-pruebas` |
+| Piloto institucional | `.env.firebase.local`; `npm run build:firebase` → `dist-firebase` | `firebase.json`, `firebase/firestore.rules`, `firebase/firestore.indexes.json`; proyecto `ucsd-objetos-perdidos` |
+| QA aislado | `.env.pruebas.local`; `npm run build:pruebas` → `dist-pruebas` | `firebase.pruebas.json`, `firebase/firestore.pruebas.rules`, el mismo archivo de índices; proyecto `ucsd-objetos-perdidos-pruebas` |
 
 Los archivos locales de entorno y directorios compilados están excluidos de Git. Recrear cada configuración desde `.env.example` con `VITE_DATA_MODE=firebase` y los cuatro valores públicos del SDK del proyecto correspondiente. El modo QA solo se habilita si el project ID coincide exactamente con `ucsd-objetos-perdidos-pruebas`. No usar `.env.local` para esta separación: alteraría también el modo predeterminado. No sobrescribir configuración existente sin preservarla.
 
@@ -58,7 +58,7 @@ Para recuperar acceso reservado en el futuro, el propietario del proyecto deber�
 ## Datos y operaciones
 
 - `publicItems`: proyección explícita publicable, sin custodia, entrega, evidencia externa ni historial.
-- `privateItems`: registro completo. Registro lee únicamente sus propios documentos; custodios y administradores autorizados consultan el conjunto cargado.
+- `privateItems`: registro completo. Registro lee únicamente sus propios documentos; custodios y administradores autorizados consultan mediante páginas filtradas.
 - `access`: permisos explícitos. Cada identidad autorizable lee su propio documento; la administración consulta y gestiona la lista bajo restricciones.
 
 Publicación, entrega y archivo actualizan datos privados y proyección pública en una transacción. Se conserva historial previo y responsable; no se eliminan registros. Las entregas nuevas exigen receptor, prueba, tipo de identificación y referencia externa de fotografía. No se carga ni almacena la imagen. Los destinos permanecen en `disposition` y terminan en archivado; no existe un quinto estado.
@@ -67,7 +67,23 @@ Una nueva escritura de destino remoto usa `serverTimestamp()` para `disposition.
 
 El seguimiento de 90 días desde recepción en Santo Domingo sigue siendo una **propuesta pendiente de aprobación UCSD**. No dona, remite ni extingue derechos automáticamente. Dinero no admite esos destinos. Consultar [protocolo](protocolo-propuesto.md) y [arquitectura](arquitectura.md).
 
-Las consultas cargan hasta 500 documentos; filtros y métricas operan sobre esa carga. Las reglas protegen permisos, coherencia e historial. Compilarlas o probar lectura de Roles no demuestra todas las escrituras autenticadas.
+La interfaz solicita páginas de **25** documentos ordenadas con cursor; combina filtros en Firestore. La búsqueda exacta usa `code`; la de texto normaliza acentos y mayúsculas, consulta el primer término indexado y revisa los restantes a medida que recorre candidatos. El reporte anual y los conteos de estados/destinos/revisión90 usan `getCountFromServer`, sin calcular totales a partir de páginas. El reporte hace **55 agregaciones por carga de año** (4 estados, 48 conteos mensuales y 3 totales); las lecturas de índices se descuentan de la cuota Spark. Se prepararon **51 índices compuestos**, bajo el límite de 200 índices del plan sin facturación. QA aprobó 136 combinaciones de consultas y comparó el reporte completo con los 69 registros privados de ese momento, con resultado exacto; las pruebas posteriores agregaron más ejemplos. [Índices Firestore](https://firebase.google.com/docs/firestore/query-data/index-overview), [agregaciones](https://firebase.google.com/docs/firestore/query-data/aggregation-queries).
+
+Las reglas permiten consultas `list` sin `limit` para soportar agregaciones. No distinguen de forma segura un `count()` de una lectura normal solo por ausencia de `limit`; un cliente distinto de la app podría solicitar muchas lecturas de los datos que ya puede consultar. La app pide 25 por página, pero eso no constituye un control global de consumo. Vigilar cuotas; si el uso crece, evaluar agregados mantenidos por backend bajo el gobierno de UCSD.
+
+## Preparar índices y campos derivados
+
+La nueva versión usa `buildingId` y `searchTerms` en la proyección pública; el registro privado añade `buildingId`, `searchTerms`, `publicSearchTerms`, `deliveryDate` y `dispositionDate`. Las dos últimas son fechas de Santo Domingo derivadas de entregas/destinos, no nuevos eventos. Los documentos existentes no reciben estos campos por compilar React. Hasta completarlos, los filtros y reportes de la nueva versión pueden omitir objetos anteriores o devolver índices faltantes.
+
+`scripts/backfill-search-index.mjs` se ejecuta **sin conexión ni escrituras por defecto**:
+
+```powershell
+node scripts/backfill-search-index.mjs
+```
+
+Para inspección de un proyecto se exige `--inspect --project=ucsd-objetos-perdidos-pruebas` o el ID institucional, más un token OAuth administrativo en `UCSD_IMPORT_ACCESS_TOKEN`; `--inspect` solo lee. `--apply` escribe y comprueba UID, proyecto, rol y facturación deshabilitada. El piloto limita el alcance a los 50 IDs ficticios esperados; QA exige marcas de datos sintéticos. Antes de escribir, el script guarda una copia de documentos completos en `evidence/`, excluida de Git, y usa `updateTime` para rechazar sobrescrituras concurrentes. La aplicación del 29/09 creó los respaldos `search-index-backup-ucsd-objetos-perdidos-pruebas-1790704161953.json` y `search-index-backup-ucsd-objetos-perdidos-1790706970836.json`. Preservarlos para recuperación.
+
+Estado de QA: 60 registros ficticios migrados con respaldo de 88 documentos, reglas e índices nuevos publicados y listos. `scripts/verify-capacity-qa.mjs` aprobó lecturas de solo lectura: conteo exacto de 28 públicos y 60 privados, primera página de 25, filtro combinado de categoría/edificio/fecha, búsqueda por término y algunos contadores de entregas/donaciones. Faltan otros filtros y combinaciones, las 12 filas del reporte, revisión de reglas sin límite, prueba visual de la nueva interfaz y lectura de consumo Spark. Antes del piloto, revisar QA restante y riesgo de reglas, validar cuotas y proyecto, inspeccionar/respaldar sus 50 objetos ficticios, autorizar/aplicar su backfill, esperar índices, probar el flujo y recién entonces decidir publicación de reglas/Hosting. Ninguno de esos cambios nuevos se ejecutó en el piloto.
 
 ## Pruebas separadas y evidencia
 
@@ -89,7 +105,7 @@ node --env-file=.env.firebase.local scripts/verify-firebase-public.mjs
 
 Las cinco comprobaciones documentadas permiten catálogo limitado y deniegan lectura privada, permisos anónimos y consultas excesivas. No sustituyen pruebas de escritura, revocación ni entrega. No ejecutar cambios del piloto como ensayo QA.
 
-Las cinco lecturas anónimas institucionales se repitieron con las reglas finales: aprobadas, cero públicos. Ambos proyectos mantienen facturación deshabilitada. Un fallo de respuesta de commit en la UI dejó una donación QA persistida; se corrigió el reconocimiento idempotente de la misma propuesta completa. El parche aprobó 53 pruebas, tipos, lint, tres builds y revisión independiente, y se republicó en ambos Hosting con 19 archivos por proyecto. Una nueva donación E2E UI completó sin error, mostró Donado e historial con exactamente un evento nuevo y fecha del servidor. No se forzó otra pérdida de respuesta; ese reconocimiento se comprobó por lógica y revisión. Las reglas y sus hashes no cambiaron.
+Las cinco lecturas anónimas institucionales de aquella versión se repitieron y aprobaron **antes de cargar objetos ficticios al piloto**: por eso el resultado histórico fue cero públicos. En esa comprobación ambos proyectos tenían facturación deshabilitada. Un fallo de respuesta de commit en la UI dejó una donación QA persistida; se corrigió el reconocimiento idempotente de la misma propuesta completa. El parche aprobó entonces 53 pruebas, tipos, lint, tres builds y revisión independiente, y se republicó en ambos Hosting. Una nueva donación UI completó sin error, mostró Donado e historial con exactamente un evento nuevo y fecha del servidor. No se forzó otra pérdida de respuesta; ese reconocimiento se comprobó por lógica y revisión. La regla posterior de agregaciones activa en QA requiere una evaluación propia.
 
 ## Coste y continuidad
 

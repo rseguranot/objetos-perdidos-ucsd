@@ -30,6 +30,9 @@ service cloud.firestore {
       return custodian() || (hasRole(['registro']) && d.createdByUid == request.auth.uid);
     }
     function limitedQuery() { return request.query.limit != null && request.query.limit <= 500; }
+    // Firestore applies list rules to count() too. An aggregate has no limit;
+    // public data remains public, and private counts still require staff access.
+    function countOrLimitedQuery() { return request.query.limit == null || limitedQuery(); }
     function text(value, maximum) { return value is string && value.trim() != '' && value.size() <= maximum; }
     function calendarDate(value) {
       let day = int(value[8:10]);
@@ -114,7 +117,7 @@ service cloud.firestore {
       // The restricted diff preserves those validated fields and the receipt/custody information.
       return before.status in ['borrador', 'disponible', 'archivado']
         && completedAt == request.time && completedAt >= deadline
-        && after.diff(before).affectedKeys().hasOnly(['status', 'disposition', 'history', 'updatedByUid', 'updatedAt']);
+        && after.diff(before).affectedKeys().hasOnly(['status', 'disposition', 'dispositionDate', 'searchTerms', 'history', 'updatedByUid', 'updatedAt']);
     }
     function dispositionTransition(before, after) {
       // A completed disposition is final: it cannot be rewritten, removed or edited.
@@ -122,7 +125,7 @@ service cloud.firestore {
         && (!('disposition' in after) || newDisposition(before, after));
     }
     function itemValid(d, itemId) {
-      let requiredFields = ['id', 'code', 'title', 'category', 'itemType', 'description', 'foundDate', 'foundLocation', 'receivedDate', 'custodyLocation', 'privateDetails', 'received', 'status', 'history', 'createdByUid', 'updatedByUid', 'updatedAt'];
+      let requiredFields = ['id', 'code', 'title', 'category', 'itemType', 'description', 'foundDate', 'foundLocation', 'receivedDate', 'custodyLocation', 'privateDetails', 'received', 'status', 'history', 'createdByUid', 'updatedByUid', 'updatedAt', 'buildingId', 'searchTerms', 'publicSearchTerms', 'deliveryDate', 'dispositionDate'];
       let receivedDate = d.receivedDate;
       let custodyLocation = d.custodyLocation;
       let privateDetails = d.privateDetails;
@@ -137,6 +140,13 @@ service cloud.firestore {
         && d.id == itemId && text(d.code, 80) && text(d.title, 160)
         && classification(d) && text(d.description, 2000)
         && foundDateValid && text(d.foundLocation, 300)
+        && d.buildingId is string && d.buildingId.size() <= 150
+        && d.searchTerms is list && d.searchTerms.size() <= 500
+        && d.publicSearchTerms is list && d.publicSearchTerms.size() <= 500
+        && d.deliveryDate is string && (d.deliveryDate == '' || d.deliveryDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$'))
+        && d.dispositionDate is string && (d.dispositionDate == '' || d.dispositionDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$'))
+        && (('delivery' in d) == (d.deliveryDate != ''))
+        && (('disposition' in d) == (d.dispositionDate != ''))
         && receivedDate is string
         && (receivedDate == '' || (receivedDateValid && receivedDate >= foundDate))
         && custodyLocation is string && custodyLocation.size() <= 300
@@ -156,7 +166,8 @@ service cloud.firestore {
       // Map equality enforces both the exact public fields and their matching values.
       return p == {'id': d.id, 'code': d.code, 'title': d.title, 'category': d.category,
           'itemType': d.itemType, 'description': d.description, 'foundDate': d.foundDate,
-          'foundLocation': d.foundLocation, 'status': 'disponible'};
+          'foundLocation': d.foundLocation, 'status': 'disponible',
+          'buildingId': d.buildingId, 'searchTerms': d.publicSearchTerms};
     }
     function publicMatches(p, d) {
       return projectionMatches(p, d) && d.status == 'disponible' && d.received == true
@@ -215,11 +226,65 @@ service cloud.firestore {
         && (role in ['developer', 'admin', 'decanato'] || registrationDraft(after))
         && publicationCoherent(after, itemId);
     }
+    function deliveryUpdateAllowed(before, after, itemId, role) {
+      // All other fields were validated when this available record was saved.
+      // Revalidating them during an atomic delivery/public deletion exceeds the
+      // Firestore rules expression budget.
+      return role in ['developer', 'admin', 'decanato']
+        && before.status == 'disponible' && after.status == 'entregado'
+        && after.diff(before).affectedKeys().hasOnly(['status', 'delivery', 'deliveryDate', 'searchTerms', 'history', 'updatedByUid', 'updatedAt'])
+        && after.updatedByUid == request.auth.uid && after.updatedAt == request.time
+        && historyAppended(before, after) && after.history.size() <= 1000 && lastEventValid(after)
+        && deliveryValid(after) && after.delivery.keys().hasAll(['identityType', 'photoEvidenceReference'])
+        && after.searchTerms is list && after.searchTerms.size() <= 500
+        && after.deliveryDate is string && after.deliveryDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && !existsAfter(/databases/$(database)/documents/publicItems/$(itemId));
+    }
+    function archiveDeliveredAllowed(before, after, itemId, role) {
+      // The delivered record was validated at handover. Archiving changes only
+      // its state and appends an audit event; evidence remains immutable.
+      return role in ['developer', 'admin', 'decanato']
+        && before.status == 'entregado' && after.status == 'archivado'
+        && after.diff(before).affectedKeys().hasOnly(['status', 'history', 'updatedByUid', 'updatedAt'])
+        && after.updatedByUid == request.auth.uid && after.updatedAt == request.time
+        && historyAppended(before, after) && after.history.size() <= 1000 && lastEventValid(after)
+        && !existsAfter(/databases/$(database)/documents/publicItems/$(itemId));
+    }
+    function dispositionUpdateAllowed(before, after, itemId, role) {
+      // The source record was validated on its previous write. A final destination
+      // changes only its disposition, private search index, state and audit event.
+      let v = after.disposition;
+      return role in ['developer', 'admin', 'decanato']
+        && before.status in ['borrador', 'disponible', 'archivado']
+        && before.received == true && !('delivery' in before) && !('disposition' in before)
+        && after.status == 'archivado'
+        && after.diff(before).affectedKeys().hasOnly(['status', 'disposition', 'dispositionDate', 'searchTerms', 'history', 'updatedByUid', 'updatedAt'])
+        && after.updatedByUid == request.auth.uid && after.updatedAt == request.time
+        && historyAppended(before, after) && after.history.size() <= 1000 && lastEventValid(after)
+        && v is map && v.keys().hasAll(['kind', 'recipient', 'reference', 'completedAt'])
+        && v.keys().hasOnly(['kind', 'recipient', 'reference', 'completedAt'])
+        && text(v.recipient, 300) && v.recipient == v.recipient.trim()
+        && text(v.reference, 2000) && v.reference == v.reference.trim()
+        && v.completedAt == request.time && v.completedAt >= dispositionDeadline(before.receivedDate)
+        && ((before.category == 'documentos' && v.kind == 'remision_documentos')
+          || (!(before.category in ['documentos', 'dinero']) && v.kind == 'donacion'))
+        && after.searchTerms is list && after.searchTerms.size() <= 500
+        && after.dispositionDate is string
+        && after.dispositionDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && !existsAfter(/databases/$(database)/documents/publicItems/$(itemId));
+    }
     function itemUpdateAllowed(itemId) {
       let role = staffRole();
       let before = resource.data;
       let after = request.resource.data;
-      return role in ['developer', 'admin', 'decanato', 'registro'] && itemValid(after, itemId)
+      return role in ['developer', 'admin', 'decanato', 'registro']
+        && (before.status == 'disponible' && after.status == 'entregado'
+          ? deliveryUpdateAllowed(before, after, itemId, role)
+          : before.status == 'entregado' && after.status == 'archivado'
+          ? archiveDeliveredAllowed(before, after, itemId, role)
+          : 'disposition' in after && !('disposition' in before)
+          ? dispositionUpdateAllowed(before, after, itemId, role)
+          : (itemValid(after, itemId)
         && after.createdByUid == before.createdByUid && after.code == before.code
         && historyAppended(before, after)
         // Final disposition already enforces archival, no delivery and the permitted prior states.
@@ -230,7 +295,7 @@ service cloud.firestore {
             && ((role in ['developer', 'admin', 'decanato'] && validTransition(before, after))
               || (role == 'registro' && before.createdByUid == request.auth.uid
                 && registrationDraft(before) && registrationDraft(after)))
-            && publicationCoherent(after, itemId)));
+            && publicationCoherent(after, itemId)))));
     }
     function publicDeleteAllowed(itemId) {
       let privatePath = /databases/$(database)/documents/privateItems/$(itemId);
@@ -258,14 +323,14 @@ service cloud.firestore {
       allow get: if staff() && (!exists(/databases/$(database)/documents/privateItems/$(itemId))
         || canReadInternal(resource.data));
       // A registro query must include where('createdByUid', '==', auth.uid).
-      allow list: if staff() && limitedQuery() && canReadInternal(resource.data);
+      allow list: if staff() && countOrLimitedQuery() && canReadInternal(resource.data);
       allow create: if itemCreateAllowed(itemId);
       allow update: if itemUpdateAllowed(itemId);
       allow delete: if false;
     }
     match /publicItems/{itemId} {
       allow get: if true;
-      allow list: if limitedQuery();
+      allow list: if countOrLimitedQuery();
       allow create, update: if custodian()
         && existsAfter(/databases/$(database)/documents/privateItems/$(itemId))
         && publicMatches(request.resource.data, getAfter(/databases/$(database)/documents/privateItems/$(itemId)).data);

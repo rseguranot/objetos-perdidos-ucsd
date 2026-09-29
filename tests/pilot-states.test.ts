@@ -5,6 +5,7 @@ import { planPilotStates } from '../src/data/pilot-states.ts'
 import { parseItems } from '../src/data/storage.ts'
 import { archiveItem, CATEGORY_LABELS, deliverItem, disposeItem, needsRetentionReview, projectPublicItems } from '../src/domain/catalog.ts'
 import { authorizeItemChange, canEdit, type Session } from '../src/domain/roles.ts'
+import type { LostItem } from '../src/domain/types.ts'
 
 test('los 50 ejemplos cubren estados, destinos y todas las categorías públicas', () => {
   const source = buildPilotExamples('2026-09-29')

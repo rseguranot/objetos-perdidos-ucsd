@@ -1,5 +1,5 @@
 {
-  "firestore": { "rules": "firebase/firestore.pruebas.rules" },
+  "firestore": { "rules": "firebase/firestore.pruebas.rules", "indexes": "firebase/firestore.indexes.json" },
   "hosting": {
     "public": "dist-pruebas",
     "ignore": ["firebase.pruebas.json", "**/.*", "**/node_modules/**"],

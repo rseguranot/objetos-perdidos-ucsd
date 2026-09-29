@@ -1,0 +1,999 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "publicItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "category",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "publicItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "itemType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "publicItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "buildingId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "publicItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "code",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "publicItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "category",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "itemType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "publicItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "category",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "buildingId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "publicItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "category",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "itemType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "buildingId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "publicItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "searchTerms",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "publicItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "category",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "searchTerms",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "publicItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "buildingId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "searchTerms",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "publicItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "category",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "buildingId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "searchTerms",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "publicItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "category",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "itemType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "searchTerms",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "publicItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "category",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "itemType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "buildingId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "searchTerms",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "createdByUid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "category",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "itemType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "buildingId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "disposition.kind",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "code",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "category",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "itemType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "category",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "buildingId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "category",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "buildingId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "createdByUid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "createdByUid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "category",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "createdByUid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "buildingId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "searchTerms",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "category",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "searchTerms",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "buildingId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "searchTerms",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "searchTerms",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "createdByUid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "searchTerms",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "category",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "buildingId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "searchTerms",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "createdByUid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "searchTerms",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "disposition.kind",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "dispositionDate",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "createdByUid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "disposition.kind",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "dispositionDate",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "createdByUid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "foundDate",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "createdByUid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "deliveryDate",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "createdByUid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "received",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "deliveryDate",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "dispositionDate",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "receivedDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "createdByUid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "received",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "deliveryDate",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "dispositionDate",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "receivedDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "received",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "deliveryDate",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "dispositionDate",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "receivedDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "createdByUid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "received",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "deliveryDate",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "dispositionDate",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "receivedDate",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "privateItems",
+      "fields": [
+        {
+          "order": "ASCENDING",
+          "fieldPath": "deliveryDate"
+        },
+        {
+          "order": "ASCENDING",
+          "fieldPath": "dispositionDate"
+        },
+        {
+          "order": "ASCENDING",
+          "fieldPath": "received"
+        },
+        {
+          "order": "ASCENDING",
+          "fieldPath": "status"
+        },
+        {
+          "order": "ASCENDING",
+          "fieldPath": "receivedDate"
+        }
+      ],
+      "queryScope": "COLLECTION"
+    },
+    {
+      "fields": [
+        {
+          "order": "ASCENDING",
+          "fieldPath": "category"
+        },
+        {
+          "order": "ASCENDING",
+          "fieldPath": "deliveryDate"
+        },
+        {
+          "order": "ASCENDING",
+          "fieldPath": "dispositionDate"
+        },
+        {
+          "order": "ASCENDING",
+          "fieldPath": "received"
+        },
+        {
+          "order": "DESCENDING",
+          "fieldPath": "receivedDate"
+        }
+      ],
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION"
+    },
+    {
+      "fields": [
+        {
+          "order": "ASCENDING",
+          "fieldPath": "deliveryDate"
+        },
+        {
+          "order": "ASCENDING",
+          "fieldPath": "dispositionDate"
+        },
+        {
+          "order": "ASCENDING",
+          "fieldPath": "itemType"
+        },
+        {
+          "order": "ASCENDING",
+          "fieldPath": "received"
+        },
+        {
+          "order": "DESCENDING",
+          "fieldPath": "receivedDate"
+        }
+      ],
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION"
+    },
+    {
+      "fields": [
+        {
+          "order": "ASCENDING",
+          "fieldPath": "category"
+        },
+        {
+          "order": "ASCENDING",
+          "fieldPath": "deliveryDate"
+        },
+        {
+          "order": "ASCENDING",
+          "fieldPath": "dispositionDate"
+        },
+        {
+          "order": "ASCENDING",
+          "fieldPath": "itemType"
+        },
+        {
+          "order": "ASCENDING",
+          "fieldPath": "received"
+        },
+        {
+          "order": "DESCENDING",
+          "fieldPath": "receivedDate"
+        }
+      ],
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION"
+    },
+    {
+      "fields": [
+        {
+          "order": "ASCENDING",
+          "fieldPath": "buildingId"
+        },
+        {
+          "order": "ASCENDING",
+          "fieldPath": "deliveryDate"
+        },
+        {
+          "order": "ASCENDING",
+          "fieldPath": "dispositionDate"
+        },
+        {
+          "order": "ASCENDING",
+          "fieldPath": "received"
+        },
+        {
+          "order": "DESCENDING",
+          "fieldPath": "receivedDate"
+        }
+      ],
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION"
+    },
+    {
+      "fields": [
+        {
+          "order": "ASCENDING",
+          "fieldPath": "buildingId"
+        },
+        {
+          "order": "ASCENDING",
+          "fieldPath": "category"
+        },
+        {
+          "order": "ASCENDING",
+          "fieldPath": "deliveryDate"
+        },
+        {
+          "order": "ASCENDING",
+          "fieldPath": "dispositionDate"
+        },
+        {
+          "order": "ASCENDING",
+          "fieldPath": "received"
+        },
+        {
+          "order": "DESCENDING",
+          "fieldPath": "receivedDate"
+        }
+      ],
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION"
+    },
+    {
+      "fields": [
+        {
+          "order": "ASCENDING",
+          "fieldPath": "buildingId"
+        },
+        {
+          "order": "ASCENDING",
+          "fieldPath": "deliveryDate"
+        },
+        {
+          "order": "ASCENDING",
+          "fieldPath": "dispositionDate"
+        },
+        {
+          "order": "ASCENDING",
+          "fieldPath": "itemType"
+        },
+        {
+          "order": "ASCENDING",
+          "fieldPath": "received"
+        },
+        {
+          "order": "DESCENDING",
+          "fieldPath": "receivedDate"
+        }
+      ],
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION"
+    },
+    {
+      "fields": [
+        {
+          "order": "ASCENDING",
+          "fieldPath": "buildingId"
+        },
+        {
+          "order": "ASCENDING",
+          "fieldPath": "category"
+        },
+        {
+          "order": "ASCENDING",
+          "fieldPath": "deliveryDate"
+        },
+        {
+          "order": "ASCENDING",
+          "fieldPath": "dispositionDate"
+        },
+        {
+          "order": "ASCENDING",
+          "fieldPath": "itemType"
+        },
+        {
+          "order": "ASCENDING",
+          "fieldPath": "received"
+        },
+        {
+          "order": "DESCENDING",
+          "fieldPath": "receivedDate"
+        }
+      ],
+      "collectionGroup": "privateItems",
+      "queryScope": "COLLECTION"
+    }
+  ],
+  "fieldOverrides": []
+}

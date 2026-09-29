@@ -70,7 +70,7 @@ El formulario exige destinatario, referencia/constancia y confirmación expresa 
 
 El registro queda **archivado** con destino interno e historial conservado. Los estados siguen siendo borrador, disponible, entregado y archivado; «Donado» y «Remitido al emisor» son etiquetas derivadas. El archivo común no documenta ni cuenta como donación. Un archivado sin entrega ni destino puede completarlo después si cumple los requisitos. Una vez documentado el destino, la app impide reescribirlo o retirarlo; los eventos anteriores permanecen.
 
-Las métricas de donados, documentos remitidos y pendientes a 90 días cuentan los registros cargados; filtrar la tabla no cambia esos totales. No deben interpretarse como inventario institucional completo si la consulta remota está limitada.
+En Firebase, las métricas de donados, documentos remitidos y pendientes a 90 días usan conteos independientes de las páginas de 25; filtrar la tabla no cambia esos totales. En la demo local, los conteos corresponden a los objetos almacenados en ese navegador.
 
 ## Acuerdos pendientes antes de operar
 
