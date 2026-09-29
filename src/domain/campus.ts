@@ -43,6 +43,16 @@ export function joinFoundLocation(building: string, detail: string): string {
   return detail.trim() ? `${building} · ${detail.trim()}` : building
 }
 
+// Move historic room details into the editable description without rewriting stored records.
+export function locationForEditing(foundLocation: string, description: string) {
+  const { building, detail } = splitFoundLocation(foundLocation)
+  return {
+    building,
+    description: building !== LEGACY_LOCATION && detail && !normalize(description).includes(normalize(detail))
+      ? `${description}\nLugar del hallazgo: ${detail}.` : description,
+  }
+}
+
 export function matchesBuilding(value: string, building: string): boolean {
   return !building || splitFoundLocation(value).building === building
 }

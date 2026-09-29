@@ -159,3 +159,13 @@ Los primeros intentos Google en el navegador integrado terminaron en popup cerra
 Capturas históricas: `evidence/hosting-publicado.png`, `evidence/hosting-publicado-celular.png`, `evidence/firebase-proyecto-spark.png`, `evidence/firebase-google-habilitado.png`, `evidence/firebase-reglas-publicadas.png`, `evidence/firebase-reglas-90-dias.png` y `evidence/firebase-ubicacion.png`.
 
 La publicación, autenticación real y pruebas locales tienen alcances distintos. Las restricciones locales pueden inspeccionarse/modificarse en el navegador y no ofrecen confidencialidad. El circuito backend QA vigente está aprobado; quedan los pendientes institucionales y operativos enumerados arriba antes de usar datos reales.
+
+## Ajustes de formularios e información · 29/09/2026
+
+Se retiraron los avisos informativos de acceso, cuenta autorizada, registro, entrega, destino y detalle público, así como los avisos explicativos de los perfiles de demostración. Se conservan errores de validación, advertencias por fechas inválidas y confirmaciones de operaciones.
+
+El formulario registra únicamente el edificio. El aula o detalle del hallazgo se escribe en Descripción pública. Al editar un registro histórico conocido, su detalle pasa a la descripción sin duplicarlo y se guarda solo el edificio; las ubicaciones históricas desconocidas conservan su texto. No se ejecuta una migración masiva de los 50 registros remotos.
+
+Validación: 63 pruebas aprobadas, lint y builds Firebase/pruebas correctos. En navegador local se comprobó formulario sin aviso ni campo de aula y guardado del ejemplo UCSD-DEMO-0002: edificio EAL, Aula 206 conservada en descripción. Sin errores de consola durante esta prueba.
+
+Publicación comprobada: Hosting del piloto actualizado; ambos dominios sirven HTML, recursos iniciales y AdminPanel idénticos al build. Se abrió el formulario real con la sesión Developer y se confirmó ausencia del aviso informativo y del campo Aula o lugar específico. Se cerró sin guardar; siguen 50 registros. Evidencia: evidence/form-clean-published.png.

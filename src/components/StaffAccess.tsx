@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import EmailOutlined from '@mui/icons-material/EmailOutlined'
 import ArrowBackRounded from '@mui/icons-material/ArrowBackRounded'
@@ -23,9 +22,7 @@ export default function StaffAccess({ session, busy, onGoogle, onEmail, onVerify
   const disabled = busy || !firebaseConfigured
   if (session.uid) return <>
     <p className="session-email">{session.email}</p>
-    {!session.role && <Alert severity="info" className="form-alert">
-      {!session.verified ? 'Verifica tu correo para acceder.' : 'Solicita acceso al administrador.'}
-    </Alert>}
+
     {!session.verified && session.email.toLowerCase().endsWith('@ucsd.edu.do') && <div className="access-verification-actions">
       <Button disabled={disabled} onClick={() => { void onVerify() }}>Enviar verificación de correo</Button>
       <Button disabled={disabled} onClick={() => { void onRefresh() }}>Ya verifiqué mi correo</Button>

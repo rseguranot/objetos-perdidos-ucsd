@@ -20,7 +20,7 @@ import { ASSIGNABLE_ROLES, ROLE_LABELS, isProtectedAccess, validateAccessChange,
 import { testAccountRole } from '../domain/test-accounts'
 import { testProjectMode } from '../data/mode'
 
-export default function RoleManager({ session, entries, demo, onSave, onDelete }: { session: Session; entries: AccessEntry[]; demo: boolean; onSave: (entry: AccessEntry) => Promise<void>; onDelete: (entry: AccessEntry) => Promise<void> }) {
+export default function RoleManager({ session, entries, onSave, onDelete }: { session: Session; entries: AccessEntry[]; demo: boolean; onSave: (entry: AccessEntry) => Promise<void>; onDelete: (entry: AccessEntry) => Promise<void> }) {
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<Role>('registro')
   const [active, setActive] = useState(true)
@@ -50,7 +50,7 @@ export default function RoleManager({ session, entries, demo, onSave, onDelete }
   }
 
   return <section className="roles-section" aria-label="Gestión de accesos">
-    {(demo || testProjectMode) && <Alert severity="warning" className="form-alert">{demo ? 'Demostración local · permisos simulados.' : 'Entorno de pruebas · datos ficticios.'}</Alert>}
+
     <form className="role-form" onSubmit={event => { void save(event) }}><h2>Agregar o actualizar acceso</h2><TextField required label={testProjectMode ? 'Correo de acceso' : 'Correo institucional'} type="email" placeholder="persona@ucsd.edu.do" value={email} disabled={saving} onChange={event => setEmail(event.target.value)} helperText={fixedTestRole ? 'Cuenta QA reservada: solo se puede actualizar su estado.' : undefined} /><TextField select label="Rol" value={fixedTestRole ?? role} disabled={saving || Boolean(fixedTestRole)} onChange={event => setRole(event.target.value as Role)} helperText={fixedTestRole ? 'Rol fijo de la cuenta de pruebas.' : undefined}>{ASSIGNABLE_ROLES.map(key => <MenuItem key={key} value={key}>{ROLE_LABELS[key]}</MenuItem>)}</TextField><FormControlLabel control={<Switch checked={active} disabled={saving} onChange={event => setActive(event.target.checked)} />} label="Acceso activo" /><Button type="submit" variant="contained" disabled={saving}>{saving ? 'Guardando…' : 'Guardar permiso'}</Button></form>
     {error && !saving && <Alert severity="error" className="form-alert">{error}</Alert>}{message && !saving && <Alert severity="success" className="form-alert" role="status">{message}</Alert>}
     <h2>{testProjectMode ? 'Accesos autorizados de pruebas' : 'Personal autorizado'}</h2><TableContainer className="admin-table"><Table aria-label={testProjectMode ? 'Permisos de pruebas' : 'Permisos del personal'}><TableHead><TableRow><TableCell>Correo</TableCell><TableCell>Rol</TableCell><TableCell>Estado</TableCell><TableCell>Acciones</TableCell></TableRow></TableHead><TableBody>{entries.toSorted((a,b) => a.email.localeCompare(b.email)).map(entry => {
