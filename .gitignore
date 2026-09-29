@@ -6,3 +6,5 @@ dist-firebase/
 .env.*
 !.env.example
 evidence/
+.firebase/
+firebase-debug.log*

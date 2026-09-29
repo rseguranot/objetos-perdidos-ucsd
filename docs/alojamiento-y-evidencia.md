@@ -1,14 +1,16 @@
 # URL pública y evidencia externa
 
-Investigación del 29 de septiembre de 2026 con documentación oficial. No se publicó Hosting, no se vinculó facturación y no se creó almacenamiento ni una carpeta Drive.
+Investigación y publicación del 29 de septiembre de 2026. Hosting clásico está publicado; no se vinculó facturación ni se creó almacenamiento de fotografías o una carpeta Drive.
 
 ## Acceder fuera de esta computadora
 
-Firebase Hosting clásico sirve el sitio estático compilado con React/Vite, proporciona HTTPS y subdominios gratuitos `web.app` y `firebaseapp.com`. Spark no requiere información de pago. La URL prevista para el sitio predeterminado del proyecto es `https://ucsd-objetos-perdidos.web.app`; aún no se ha desplegado ni comprobado ese sitio. [Hosting](https://firebase.google.com/docs/hosting), [planes](https://firebase.google.com/docs/projects/billing/firebase-pricing-plans).
+Firebase Hosting clásico sirve el sitio estático compilado con React/Vite, proporciona HTTPS y subdominios gratuitos `web.app` y `firebaseapp.com`. Spark no requiere información de pago. La URL publicada y comprobada es [ucsd-objetos-perdidos.web.app](https://ucsd-objetos-perdidos.web.app). [Hosting](https://firebase.google.com/docs/hosting), [planes](https://firebase.google.com/docs/projects/billing/firebase-pricing-plans).
 
 El código está preparado con `npm run build:firebase` → `dist-firebase` y `firebase.json`. Publicar la demo local solamente compartiría una simulación: su localStorage no centraliza información entre dispositivos. Para el piloto deben publicarse la versión Firebase y sus reglas, completar Google y el permiso Developer inicial, y comprobar los permisos autenticados y el circuito de entrega con datos ficticios antes de usar datos reales.
 
-La petición actual consulta si es posible tener una URL; no autoriza por sí sola el despliegue. Preparar el artefacto, acordar el carácter de propuesta del sitio y autorizar su publicación son pasos distintos. Si la operación se realiza por UI, la concesión del acceso Developer requiere confirmación en el momento de crear su permiso. No hay provisión automática.
+El usuario autorizó publicar y conceder a Firebase CLI acceso con la cuenta institucional. Se utilizó la herramienta oficial 15.32.0 de forma temporal, sin instalación global ni nuevas dependencias del proyecto. Se desplegaron únicamente los 19 archivos de `dist-firebase`, con `--only hosting --project ucsd-objetos-perdidos`; no se desplegaron reglas ni se asignaron accesos. La consulta remota está vacía y los ejemplos locales permanecen en cada navegador. La concesión Developer y las pruebas autenticadas siguen pendientes; no hay provisión automática.
+
+Para publicar otra versión, restaurar las dependencias fijadas, preparar `.env.firebase.local`, ejecutar `npm run build:firebase` y comprobar el resultado antes de ejecutar `firebase deploy --only hosting --project ucsd-objetos-perdidos --account rsegura20250554@ucsd.edu.do`. La CLI requiere una sesión autorizada. Mantener el proyecto en Spark. Las actualizaciones de reglas deben desplegarse y validarse por separado. Para recuperar una publicación anterior, utilizar el historial de versiones de Hosting y comprobar la URL después; esta fue la primera publicación, por lo que no había una versión anterior del sitio para rollback.
 
 Conservar Hosting clásico: Firebase App Hosting requiere Blaze y no aporta una necesidad para esta SPA. [Costes de App Hosting](https://firebase.google.com/docs/app-hosting/costs).
 

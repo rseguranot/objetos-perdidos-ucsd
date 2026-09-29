@@ -8,7 +8,7 @@ Revisiones del 28 y 29 de septiembre de 2026. Entorno: Windows, Node 26.6.0 y np
 
 Las tarjetas de audífonos, llaves, mochila y el aviso, junto con la estrella, usan una animación CSS con ciclos independientes de 3.8 a 6.2 segundos. Conservan sus inclinaciones originales, se balancean y se desplazan entre 8 y 24 píxeles en vertical y hasta 6 en horizontal, sin dependencias nuevas. El recorrido es menor en celular. Se activa únicamente con `prefers-reduced-motion: no-preference`. Se intensificó a petición del usuario y se confirmaron transformaciones distintas entre observaciones de su pestaña local.
 
-Se comprobaron las transformaciones en movimiento en el navegador local y las cinco animaciones detenidas (`animation-name: none`) al emular movimiento reducido. En viewport de 390 × 844, el ancho de página fue 375, sin desbordamiento horizontal. Se restauraron la preferencia y el viewport después de comprobarlos. Capturas: `evidence/hero-flotacion-escritorio.png` y `evidence/hero-flotacion-celular.png`. `npm run lint`, `npm run build` y `npm run build:firebase` aprobaron; ambas compilaciones incluyen comprobación de tipos. Esta mejora está verificada localmente; la publicación de Hosting sigue pendiente del consentimiento para Firebase CLI.
+Se comprobaron las transformaciones en movimiento en el navegador local y las cinco animaciones detenidas (`animation-name: none`) al emular movimiento reducido. En viewport de 390 × 844, el ancho de página fue 375, sin desbordamiento horizontal. Se restauraron la preferencia y el viewport después de comprobarlos. Capturas: `evidence/hero-flotacion-escritorio.png` y `evidence/hero-flotacion-celular.png`. `npm run lint`, `npm run build` y `npm run build:firebase` aprobaron; ambas compilaciones incluyen comprobación de tipos. La mejora también quedó incluida en la publicación de Hosting descrita más abajo.
 
 - `npm run build` y comprobación de tipos: aprobados para la ampliación del 29 de septiembre.
 - `npm run build:firebase`: aprobado nuevamente después de la ampliación del 29 de septiembre. Genera `dist-firebase` sin publicar.
@@ -49,6 +49,18 @@ Tras recargar la demo en 5173, persistieron 28 objetos públicos. Decanato mostr
 
 En la vista previa de la compilación del 29 de septiembre, a **390 × 844**, catálogo Hoy y administración Hoy mostraron dos resultados cada uno; ambos campos de fechas permanecieron visibles. El ancho de página fue 375, dentro del viewport de 390. La tabla de 841 de ancho quedó dentro de su contenedor de 333 con desplazamiento horizontal propio, sin desbordar la página. Las consolas de demo y preview no mostraron errores ni advertencias. Se restauró el viewport normal y se cerró la pestaña preview al terminar. No se trata de una prueba en un teléfono físico.
 
+## Publicación de Hosting (29 de septiembre, aproximadamente 05:38 UTC−4)
+
+Se publicó la versión de aplicación del commit `5736d3e`, incluida la flotación más visible, en [ucsd-objetos-perdidos.web.app](https://ucsd-objetos-perdidos.web.app). Firebase CLI oficial 15.32.0 completó la sesión con la cuenta institucional y desplegó únicamente Hosting: 19 archivos de `dist-firebase`, sin despliegue de reglas, cambios de facturación ni migración de registros o roles locales. La consola confirmó versión actual `57e95e`, 29/09/2026 a las 05:38, y plan Spark sin costo (USD 0 al mes).
+
+- HTTPS respondió 200 y su HTML coincidió con `dist-firebase/index.html`.
+- El CSS publicado respondió 200, coincidió con el archivo compilado e incluyó `hero-float`; el navegador confirmó la animación de audífonos con ciclo de 4.8 segundos.
+- El catálogo terminó de cargar con cero registros y el mensaje de ausencia de coincidencias, sin errores o advertencias de consola. Las cinco comprobaciones anónimas de Firestore se repitieron y aprobaron.
+- Acceso personal mostró Google, sin identidades simuladas. No se inició una sesión de usuario en la app: el consentimiento y login de CLI solo permiten operar la herramienta de despliegue.
+- A 390 × 844, la página midió 375 de ancho y conservó la flotación con menor recorrido. Se restauró el viewport al terminar. No se probó en un teléfono físico.
+
+Capturas excluidas de Git: `evidence/hosting-publicado.png` y `evidence/hosting-publicado-celular.png`. Siguen pendientes las reglas nuevas de Developer y evidencia de entrega, el UID y permiso Developer inicial, y la gestión autenticada de extremo a extremo. No se hizo push a GitHub.
+
 ## Firebase comprobado
 
 La versión activa comprobada corresponde a destinos de 90 días. La ampliación posterior de fuente con Developer y evidencia de entrega está preparada, **sin compilar ni publicar en consola**. Tampoco se creó permiso Developer real. Las comprobaciones remotas de este documento no validan esa versión nueva.
@@ -61,7 +73,7 @@ La versión activa comprobada corresponde a destinos de 90 días. La ampliación
 | Firestore | Standard, `(default)`, producción, ubicación `nam5` |
 | Reglas | Ampliación de destinos publicada y compilada el 29/09 a las 00:06; versión del 28/09 a las 23:35 conservada como referencia para rollback |
 | Usuarios y administrador inicial | Users vacío; sin UID ni administrador inicial |
-| Hosting y Git remoto | Sin publicación de Hosting; `origin` GitHub configurado; entrega mediante commit local, sin push |
+| Hosting y Git remoto | Hosting publicado en `ucsd-objetos-perdidos.web.app`; `origin` GitHub configurado; entrega mediante commit local, sin push |
 
 El selector no permitió elegir `us-east1`; la consola confirmó `nam5`, ubicación aplicada por Firebase. Se conservó la base sin cambiarla ni recrearla.
 

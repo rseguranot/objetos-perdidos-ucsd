@@ -4,6 +4,8 @@ Demostración local de un catálogo público y un panel del decanato para centra
 
 **Es una propuesta para presentar a UCSD, no un servicio oficial.** El modo local utiliza exclusivamente datos ficticios e identidades simuladas. También está preparada la integración del SDK de Firebase para un piloto con identidad Google y permisos institucionales. Tener esa integración en el código no demuestra conexión, seguridad validada ni publicación.
 
+**Piloto publicado el 29 de septiembre de 2026:** [ucsd-objetos-perdidos.web.app](https://ucsd-objetos-perdidos.web.app). Se desplegó el modo Firebase, incluida la flotación de la portada, en Hosting clásico del proyecto institucional, conservando Spark sin facturación. La consulta pública se comprobó con el catálogo remoto vacío; los ejemplos locales no se migraron. El acceso Developer real, las reglas nuevas y las pruebas de gestión autenticada siguen pendientes. Consultar [verificación](docs/verificacion.md) para el alcance comprobado.
+
 El catálogo y el formulario usan **categoría principal + tipo de objeto controlado**. Hay ocho categorías: Electrónica, Documentos, Llaves, Material académico, Ropa, Bolsos y accesorios, Dinero y Otros. Cada categoría ofrece sus tipos compatibles: por ejemplo, Electrónica → Estuche de audífonos y Material académico → Cuaderno. El tipo permite concretar la búsqueda sin multiplicar las categorías. La lectura adapta clasificaciones anteriores en memoria sin borrar registros, códigos ni historial. Para dinero, el formulario orienta a guardar monto y denominaciones en las características reservadas.
 
 ## Filtros y seguimiento
@@ -82,7 +84,7 @@ Developer queda por encima de Administrador y no aparece entre los roles asignab
 
 El estudiante debe acreditar la propiedad y presentar documento de identidad o carné de estudiante. El personal revisa la identificación presencialmente y toma evidencia de la entrega junto al objeto, según el protocolo que apruebe UCSD. Las nuevas entregas requieren receptor, prueba de propiedad, tipo de identificación verificada y referencia de la fotografía externa, además de la confirmación del operador. La app no solicita número de documento, no toma imágenes, no carga archivos y no guarda la foto. Fecha y responsable quedan en el historial. Los registros anteriores se conservan sin inventar evidencia.
 
-Para una URL pública y la evaluación de fotografías, consultar [alojamiento y evidencia externa](docs/alojamiento-y-evidencia.md). La URL y la asignación Developer real no están activadas por esta ampliación.
+Para la URL publicada y la evaluación de fotografías, consultar [alojamiento y evidencia externa](docs/alojamiento-y-evidencia.md). La asignación Developer real sigue pendiente.
 
 ## Persistencia y límites
 
@@ -110,7 +112,7 @@ La [comprobación remota anónima](scripts/verify-firebase-public.mjs) aprobó c
 node --env-file=.env.firebase.local scripts/verify-firebase-public.mjs
 ```
 
-El catálogo público limitado a 500 respondió con 0 documentos; documentos privados, permisos, consulta sin límite y límite 501 se denegaron. Esto no valida permisos autenticados. En el navegador integrado, el popup de Google se cerró y la redirección regresó anónima; Authentication Users sigue vacío. **No hay UID, administrador inicial ni E2E autenticado completado.** Probar el popup en un navegador normal con `http://localhost:5174`; el acceso inicial solo se prepara después de comprobar un UID real. Hosting no está publicado. `origin` está configurado con GitHub; esta entrega se conserva mediante un commit local, sin push.
+El catálogo público limitado a 500 respondió con 0 documentos; documentos privados, permisos, consulta sin límite y límite 501 se denegaron. Esto no valida permisos autenticados. En el navegador integrado, el popup de Google se cerró y la redirección regresó anónima; Authentication Users sigue vacío. **No hay UID, administrador inicial ni E2E autenticado completado.** Probar el popup en un navegador normal con `http://localhost:5174`; el acceso inicial solo se prepara después de comprobar un UID real. Hosting está publicado y su consulta pública fue comprobada. `origin` está configurado con GitHub; esta entrega se conserva mediante un commit local, sin push.
 
 El piloto propone [Firebase Hosting](https://firebase.google.com/docs/hosting), Firestore y autenticación con Google en [Spark](https://firebase.google.com/docs/projects/billing/firebase-pricing-plans), manteniendo la facturación deshabilitada. El objetivo es US$0 de infraestructura dentro de las cuotas; superar límites puede interrumpir operaciones o el servicio. Desarrollo, mantenimiento y atención del decanato requieren tiempo. Antes de operar, acordar administración institucional del proyecto y confirmar el acceso de la cuenta inicial.
 
