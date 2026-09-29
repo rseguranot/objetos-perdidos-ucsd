@@ -82,3 +82,5 @@ Ambos Hosting publicaron la revisión de textos; HTML y assets recuperados por H
 Se retiraron también las tres frases señaladas en la revisión de contenido: «Las operaciones están sujetas a los permisos del backend», «Piloto: acceso institucional y autorizaciones individuales» y «Una propuesta para cuidar lo que compartimos». Se conserva la identificación de la demo y las instrucciones operativas.
 
 La eliminación de las tres frases aprobó lint y las compilaciones de piloto y QA con tipos. Se publicó en ambos Hosting y los archivos recuperados por HTTP coincidieron con las compilaciones locales. No se modificó lógica de datos o permisos ni se repitieron pruebas de autenticación por este cambio de texto.
+
+En la revisión de estilo se simplificaron también títulos y mensajes de la guía y el catálogo: búsqueda, consulta al decanato, acreditación de propiedad y estado sin resultados. La fotografía se describe con lenguaje directo. El ajuste aprobó lint y compilaciones con tipos y se publicó en ambos Hosting; sus assets coinciden con los builds locales.
