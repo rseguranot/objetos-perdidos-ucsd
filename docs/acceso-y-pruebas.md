@@ -78,3 +78,7 @@ El acceso se simplificó también en sus textos: selector sin párrafos explicat
 La revisión de estos textos aprobó lint y las compilaciones de piloto/QA con tipos. El cambio solo afecta presentación; no se repitió la suite ni el circuito de autenticación ya comprobados en la revisión anterior. La comprobación visual posterior encontró un bloqueo de conexión del navegador integrado; no se declara una nueva prueba visual aprobada para esta revisión.
 
 Ambos Hosting publicaron la revisión de textos; HTML y assets recuperados por HTTP coincidieron con sus compilaciones locales.
+
+Se retiraron también las tres frases señaladas en la revisión de contenido: «Las operaciones están sujetas a los permisos del backend», «Piloto: acceso institucional y autorizaciones individuales» y «Una propuesta para cuidar lo que compartimos». Se conserva la identificación de la demo y las instrucciones operativas.
+
+La eliminación de las tres frases aprobó lint y las compilaciones de piloto y QA con tipos. Se publicó en ambos Hosting y los archivos recuperados por HTTP coincidieron con las compilaciones locales. No se modificó lógica de datos o permisos ni se repitieron pruebas de autenticación por este cambio de texto.
