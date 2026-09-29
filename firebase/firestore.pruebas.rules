@@ -216,6 +216,13 @@ service cloud.firestore {
         && request.resource.data.updatedAt == request.time
         && (targetEmail != email() || (request.resource.data.role == 'admin' && request.resource.data.active == true));
     }
+    function removableAccess(targetEmail) {
+      return admin() && targetEmail != email()
+        && targetEmail != 'rsegura20250554@ucsd.edu.do'
+        && (targetEmail.matches('^[^@/]+@ucsd[.]edu[.]do$') || qaEmail(targetEmail))
+        && resource.data.email == targetEmail && resource.data.role != 'developer'
+        && (!qaEmail(targetEmail) || resource.data.role == qaExpectedRole(targetEmail));
+    }
     function itemCreateAllowed(itemId) {
       let role = staffRole();
       let after = request.resource.data;
@@ -261,7 +268,7 @@ service cloud.firestore {
       // Developer cannot be granted, demoted or revoked by ANY app client, including Developer itself.
       allow create: if assignableAccess(targetEmail);
       allow update: if assignableAccess(targetEmail) && resource.data.role != 'developer';
-      allow delete: if false;
+      allow delete: if removableAccess(targetEmail);
     }
     match /privateItems/{itemId} {
       // Creation transactions need to verify that their generated ID is unused.

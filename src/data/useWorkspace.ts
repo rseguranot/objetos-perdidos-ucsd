@@ -3,7 +3,7 @@ import { cloudMode, firebaseConfigured } from './mode'
 import { loadItems, resetItems, saveItems } from './storage'
 import { loadAccess, saveAccess } from './access-storage'
 import { createItem, projectPublicItems } from '../domain/catalog'
-import { authorizeItemChange, canManageRoles, canRegister, validateAccessChange, type AccessEntry, type Session } from '../domain/roles'
+import { authorizeItemChange, canManageRoles, canRegister, validateAccessChange, validateAccessRemoval, type AccessEntry, type Session } from '../domain/roles'
 import type { LostItem, PublicItem } from '../domain/types'
 import { recordsEqual } from '../domain/records'
 import { appendUniversityExamples } from './seed'
@@ -88,10 +88,15 @@ export function useWorkspace() {
     if (cloudMode) { const cloud = await import('./cloud'); await cloud.writeAccess(session, clean) }
     else { const next = [...entries.filter(current => current.email !== clean.email), clean]; saveAccess(next); setEntries(next) }
   }
+  async function removeAccess(entry: AccessEntry): Promise<void> {
+    const email = validateAccessRemoval(session, entry)
+    if (cloudMode) { const cloud = await import('./cloud'); await cloud.removeAccess(session, { ...entry, email }) }
+    else { const next = entries.filter(current => current.email !== email); saveAccess(next); setEntries(next) }
+  }
   function resetLocal() { if (cloudMode) throw new Error('El restablecimiento solo existe en la demo.'); setItems(resetItems()); setLocalError('') }
   return {
     items: cloudMode && !allowed ? [] : session.role === 'registro' ? items.filter(item => item.createdByUid === session.uid) : items,
     publicItems: cloudMode ? publicItems : projectPublicItems(items), entries: cloudMode && !roleAdmin ? [] : entries,
-    session, error, loading, privateLoading, capped, commit, updateAccess, resetLocal, setDemoEmail,
+    session, error, loading, privateLoading, capped, commit, updateAccess, removeAccess, resetLocal, setDemoEmail,
   }
 }

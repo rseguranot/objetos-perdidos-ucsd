@@ -51,7 +51,7 @@ Google por redirección se ofrece únicamente cuando `authDomain` coincide con `
 | `admin` | Operaciones del decanato y gestión de permisos asignables |
 | `developer` | Operaciones superiores, exclusivo de la cuenta reservada con autorización explícita |
 
-Developer real ya está preparado y comprobado. No repetir su alta. No hay bootstrap automático ni excepción que autorice por conocer el correo. El gestor no permite asignar Developer ni editar, degradar o desactivar su documento reservado, tampoco al propio Developer. Este rol no concede permisos IAM.
+Developer real ya está preparado y comprobado. No repetir su alta. No hay bootstrap automático ni excepción que autorice por conocer el correo. El gestor no permite asignar Developer ni editar, degradar o desactivar su documento reservado, tampoco al propio Developer. Este rol no concede permisos IAM. El gestor permite editar roles, activar/desactivar y eliminar el documento de autorización de otros perfiles; eliminarlo no borra su identidad de Google/Firebase Authentication. El perfil actual y Developer están protegidos. Las reglas de Firestore aplican las mismas restricciones.
 
 Para recuperar acceso reservado en el futuro, el propietario del proyecto deberá verificar la identidad y UID reales en Authentication antes de modificar su documento desde consola administrativa. Preservar el documento existente y requerir autorización para el cambio; no inventar UID ni abrir reglas. Los SDK administrativos y consola requieren control IAM propio. [Alcance de reglas](https://firebase.google.com/docs/firestore/security/rules-conditions).
 

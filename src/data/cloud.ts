@@ -1,9 +1,9 @@
 import { getIdTokenResult, onIdTokenChanged } from 'firebase/auth'
-import { collection, doc, limit, onSnapshot, orderBy, query, runTransaction, serverTimestamp, setDoc, where } from 'firebase/firestore'
+import { collection, deleteDoc, doc, limit, onSnapshot, orderBy, query, runTransaction, serverTimestamp, setDoc, where } from 'firebase/firestore'
 import { auth, completeGoogleRedirect, db } from './firebase'
 import { normalizeClassification, projectPublicItems } from '../domain/catalog'
 import { parseItems } from './storage'
-import { authorizeItemChange, institutionalEmail, isRole, validateAccessChange, type AccessEntry, type Session } from '../domain/roles'
+import { authorizeItemChange, institutionalEmail, isRole, validateAccessChange, validateAccessRemoval, type AccessEntry, type Session } from '../domain/roles'
 import type { LostItem, PublicItem } from '../domain/types'
 import { committedRecordMatches, recordsEqual } from '../domain/records'
 import { decodeFirestoreRecord, encodeFirestoreRecord } from './firestore-records'
@@ -64,6 +64,10 @@ export function watchAccess(next: (entries: AccessEntry[]) => void, fail: (error
 export async function writeAccess(session: Session, entry: AccessEntry): Promise<void> {
   const clean = validateAccessChange(session, entry)
   await setDoc(doc(database(), 'access', clean.email), { ...clean, updatedByUid: session.uid, updatedAt: serverTimestamp() })
+}
+export async function removeAccess(session: Session, entry: AccessEntry): Promise<void> {
+  const email = validateAccessRemoval(session, entry)
+  await deleteDoc(doc(database(), 'access', email))
 }
 export async function writeItem(session: Session, previous: LostItem | undefined, next: LostItem): Promise<void> {
   authorizeItemChange(session, previous, next)

@@ -71,3 +71,10 @@ export function validateAccessChange(session: Session, entry: AccessEntry, envir
   if (email === session.email.toLowerCase() && (!entry.active || entry.role !== 'admin')) throw new Error('No puedes desactivar ni retirar tu propio rol de administrador.')
   return { email, role: entry.role, active: entry.active }
 }
+export function validateAccessRemoval(session: Session, entry: AccessEntry, environment?: TestAccountEnvironment): string {
+  if (!canManageRoles(session)) throw new Error('Solo un administrador o Developer puede gestionar permisos.')
+  const email = institutionalEmail(entry.email, environment)
+  if (isProtectedAccess({ ...entry, email })) throw new Error('El acceso Developer está protegido y no se puede eliminar.')
+  if (email === session.email.toLowerCase()) throw new Error('No puedes eliminar el acceso de tu propia cuenta.')
+  return email
+}

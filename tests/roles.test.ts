@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { authorizeItemChange, canEdit, canManageRoles, institutionalEmail, validateAccessChange, type Session } from '../src/domain/roles.ts'
+import { authorizeItemChange, canEdit, canManageRoles, institutionalEmail, validateAccessChange, validateAccessRemoval, type Session } from '../src/domain/roles.ts'
 import { SEED_ITEMS } from '../src/data/seed.ts'
 import { recordsEqual } from '../src/domain/records.ts'
 
@@ -32,4 +32,10 @@ test('administrador gestiona accesos sin retirar su propio permiso', () => {
   assert.throws(() => validateAccessChange(registry, { email: 'persona@ucsd.edu.do', role: 'admin', active: true }))
   assert.throws(() => validateAccessChange(admin, { email: admin.email, role: 'registro', active: true }))
   assert.throws(() => validateAccessChange(admin, { email: admin.email, role: 'admin', active: false }))
+})
+test('administrador puede eliminar otro acceso, pero no el propio ni Developer', () => {
+  assert.equal(validateAccessRemoval(admin, { email: 'persona@ucsd.edu.do', role: 'registro', active: true }), 'persona@ucsd.edu.do')
+  assert.throws(() => validateAccessRemoval(admin, { email: admin.email, role: 'admin', active: true }), /propia cuenta/)
+  assert.throws(() => validateAccessRemoval(admin, { email: 'rsegura20250554@ucsd.edu.do', role: 'developer', active: true }), /Developer/)
+  assert.throws(() => validateAccessRemoval(registry, { email: 'persona@ucsd.edu.do', role: 'registro', active: true }), /administrador/)
 })
