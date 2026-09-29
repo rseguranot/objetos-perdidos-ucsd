@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
-import Divider from '@mui/material/Divider'
+import EmailOutlined from '@mui/icons-material/EmailOutlined'
+import ArrowBackRounded from '@mui/icons-material/ArrowBackRounded'
 import TextField from '@mui/material/TextField'
 import type { Session } from '../domain/roles'
 import { ROLE_LABELS } from '../domain/roles'
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export default function StaffAccess({ session, busy, onGoogle, onEmail, onVerify, onRefresh }: Props) {
+  const [method, setMethod] = useState<'choice' | 'email'>('choice')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const disabled = busy || !firebaseConfigured
@@ -33,19 +35,29 @@ export default function StaffAccess({ session, busy, onGoogle, onEmail, onVerify
     <Button fullWidth variant="outlined" disabled={disabled} onClick={() => { void onGoogle() }}>Cerrar sesión</Button>
   </>
   return <>
-    <Alert severity="info" className="form-alert">{testProjectMode ? 'Usa una de las cuentas de pruebas con contraseña. Google y tu acceso Developer están disponibles en el piloto institucional, que tiene una base separada.' : 'Usa Google o una cuenta de correo y contraseña creada para esta herramienta. Tener correo UCSD no asigna permisos automáticamente.'}</Alert>
-    {testProjectMode ? <Button fullWidth variant="contained" href="https://ucsd-objetos-perdidos.firebaseapp.com/?acceso=google">Google en el piloto institucional</Button> : <Button fullWidth variant="contained" disabled={disabled} onClick={() => { void onGoogle(googleRedirectConfigured ? 'redirect' : 'popup') }}>{busy ? 'Conectando…' : 'Continuar con Google'}</Button>}
-    {!testProjectMode && googleHostedAccessUrl && <><p className="roles-note">Si la ventana de Google no se abre, usa el acceso en esta pestaña.</p><Button fullWidth disabled={disabled} href={googleHostedAccessUrl}>Google en esta pestaña</Button></>}
-    <Divider sx={{ my: 2.5 }}>o con correo</Divider>
-    <form className="email-access-form" onSubmit={event => {
-      event.preventDefault()
-      if (!disabled) void onEmail(email, password).then(success => { if (success) setPassword('') })
-    }}>
-      <TextField fullWidth required type="email" label={testProjectMode ? 'Correo de pruebas' : 'Correo institucional'} autoComplete="username" value={email} disabled={disabled} onChange={event => setEmail(event.target.value)} />
-      <TextField fullWidth required type="password" label="Contraseña de esta herramienta" autoComplete="current-password" value={password} disabled={disabled} onChange={event => setPassword(event.target.value)} />
-      <Button fullWidth type="submit" variant="outlined" disabled={disabled}>{busy ? 'Conectando…' : 'Entrar con correo'}</Button>
-    </form>
-    <p className="roles-note">La contraseña de esta herramienta se gestiona por separado del acceso con Google. Solicita tu cuenta y rol al responsable.</p>
+    {method === 'choice' ? <>
+      <p className="access-intro">Elige cómo quieres iniciar sesión.</p>
+      <div className="access-methods">
+        <Button fullWidth variant="outlined" className="google-access-button" startIcon={<img src="/brand/google-g.png" width="20" height="20" alt="" aria-hidden="true" />} disabled={disabled}
+          {...(testProjectMode || googleHostedAccessUrl ? { href: testProjectMode ? 'https://ucsd-objetos-perdidos.firebaseapp.com/?acceso=google' : googleHostedAccessUrl } : { onClick: () => { void onGoogle(googleRedirectConfigured ? 'redirect' : 'popup') } })}>
+          {busy ? 'Conectando…' : 'Continuar con Google'}
+        </Button>
+        <Button fullWidth variant="contained" startIcon={<EmailOutlined />} disabled={disabled} onClick={() => setMethod('email')}>Continuar con correo</Button>
+      </div>
+      <p className="roles-note">{testProjectMode ? 'Google abre el piloto institucional. Para este entorno, usa tu cuenta de pruebas con correo.' : 'Acceso exclusivo para personal autorizado por la universidad.'}</p>
+    </> : <>
+      <Button className="access-back-button" startIcon={<ArrowBackRounded />} disabled={disabled} onClick={() => { setMethod('choice'); setPassword('') }}>Volver a las opciones</Button>
+      <p className="access-intro">Ingresa con tu correo y contraseña.</p>
+      <form className="email-access-form" onSubmit={event => {
+        event.preventDefault()
+        if (!disabled) void onEmail(email, password).then(success => { if (success) setPassword('') })
+      }}>
+        <TextField autoFocus fullWidth required type="email" label={testProjectMode ? 'Correo de pruebas' : 'Correo institucional'} autoComplete="username" value={email} disabled={disabled} onChange={event => setEmail(event.target.value)} />
+        <TextField fullWidth required type="password" label="Contraseña de esta herramienta" autoComplete="current-password" value={password} disabled={disabled} onChange={event => setPassword(event.target.value)} />
+        <Button fullWidth type="submit" variant="contained" disabled={disabled}>{busy ? 'Conectando…' : 'Entrar con correo'}</Button>
+      </form>
+      <p className="roles-note">Usa la contraseña creada para esta herramienta. Si necesitas una cuenta, solicítala al responsable.</p>
+    </>}
     {!firebaseConfigured && <p>La configuración del proyecto Firebase está pendiente.</p>}
   </>
 }

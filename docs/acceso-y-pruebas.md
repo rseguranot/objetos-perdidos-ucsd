@@ -18,7 +18,7 @@ La UI ofrece Google y **Correo y contraseña**. La segunda opción usa un usuari
 
 La app no permite crear cuentas. Roles tampoco crea usuarios Authentication ni contraseñas: administra únicamente autorización. Gestión institucional requiere correo verificado, proveedor actual Google o contraseña, dominio exacto `ucsd.edu.do` y permiso activo. No se falsifica la verificación de correo. [Documentación del proveedor contraseña](https://firebase.google.com/docs/auth/web/password-auth).
 
-Google por redirección se permite solo cuando app y `authDomain` comparten origen. Usar firebaseapp.com para ese flujo. Desde web.app hay popup y enlace explícito al firebaseapp.com del mismo piloto. Cada origen tiene su sesión; ver una sesión en un dominio no implica verla en el otro. [Condiciones de redirección](https://firebase.google.com/docs/auth/web/redirect-best-practices).
+Google por redirección se permite solo cuando app y `authDomain` comparten origen. Usar firebaseapp.com para ese flujo. Desde web.app, el botón Google abre el acceso en firebaseapp.com del mismo piloto para usar la redirección compatible. Cada origen tiene su sesión; ver una sesión en un dominio no implica verla en el otro. [Condiciones de redirección](https://firebase.google.com/docs/auth/web/redirect-best-practices).
 
 Developer ya está dado de alta explícitamente; no repetir bootstrap. Es reservado, no asignable ni modificable desde Roles, incluso por el propio Developer. No implica IAM.
 
@@ -62,3 +62,13 @@ No se creó ni probó una cuenta institucional con contraseña ni su verificaci�
 En una donación ficticia del navegador, Firebase confirmó la escritura pero se perdió la respuesta del commit. El reintento ya reconoce la propuesta completa persistida sin otra escritura, conservando conflictos si los datos difieren. El parche aprobó dos pruebas nuevas (53 totales), lint, tipos y las tres compilaciones, y se republicó en ambos Hosting. Una nueva donación desde Decanato en QA completó el formulario, cerró el diálogo sin error, mostró Donado y conservó exactamente un evento de donación más creación, con fecha autoritativa. No se forzó otra pérdida de respuesta: la recuperación está cubierta por pruebas de lógica y revisión independiente. Las reglas no cambiaron. Las cinco comprobaciones anónimas institucionales finales aprobaron con cero públicos.
 
 Los 90 días y custodia externa de fotografías siguen como propuesta UCSD. No existen donaciones automáticas, carga de fotos ni almacenamiento Firebase Storage.
+
+## Selector de acceso — 29/09/2026
+
+El diálogo comienza con dos opciones: «Continuar con Google» y «Continuar con correo». Correo muestra exclusivamente su formulario; «Volver a las opciones» regresa al selector y limpia la contraseña. Al cerrar el diálogo se desmonta el formulario para volver al selector al abrirlo de nuevo. Las sesiones ya iniciadas conservan sus opciones de verificación y cierre.
+
+Google muestra el logotipo oficial multicolor servido localmente desde `public/brand/google-g.png`, obtenido de [Google Identity](https://developers.google.com/identity/branding-guidelines) ([asset oficial](https://developers.google.com/static/identity/images/g-logo.png)). En QA abre el piloto institucional; en el piloto conserva su identidad y autorización existentes. Este ajuste no crea cuentas ni cambia permisos o reglas.
+
+Verificación: lint, 57 pruebas existentes y compilaciones con tipos; en la UI de QA se comprobaron selector, ocultación de Google, regreso, ingreso real de Decanato con contraseña y reapertura. Las pruebas de lógica existentes no se presentan como pruebas visuales del diálogo.
+
+La versión del selector se publicó en ambos Hosting (20 archivos cada uno). Se comprobó la pantalla del piloto y el enlace Google al origen institucional; HTML y assets recuperados por HTTP coinciden con los builds locales. No se repitió el circuito Google completo en esta revisión visual. Capturas locales: `evidence/acceso-selector-publicado.png`, `evidence/acceso-dos-opciones.png` y `evidence/acceso-solo-correo.png`.
