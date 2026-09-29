@@ -72,3 +72,9 @@ Google muestra el logotipo oficial multicolor servido localmente desde `public/b
 Verificación: lint, 57 pruebas existentes y compilaciones con tipos; en la UI de QA se comprobaron selector, ocultación de Google, regreso, ingreso real de Decanato con contraseña y reapertura. Las pruebas de lógica existentes no se presentan como pruebas visuales del diálogo.
 
 La versión del selector se publicó en ambos Hosting (20 archivos cada uno). Se comprobó la pantalla del piloto y el enlace Google al origen institucional; HTML y assets recuperados por HTTP coinciden con los builds locales. No se repitió el circuito Google completo en esta revisión visual. Capturas locales: `evidence/acceso-selector-publicado.png`, `evidence/acceso-dos-opciones.png` y `evidence/acceso-solo-correo.png`.
+
+El acceso se simplificó también en sus textos: selector sin párrafos explicativos, formulario con «Correo» y «Contraseña» y sin notas sobre cuentas o entornos. La diferencia entre QA y piloto sigue señalada en la cabecera de la página; las restricciones y los destinos de autenticación se conservan.
+
+La revisión de estos textos aprobó lint y las compilaciones de piloto/QA con tipos. El cambio solo afecta presentación; no se repitió la suite ni el circuito de autenticación ya comprobados en la revisión anterior. La comprobación visual posterior encontró un bloqueo de conexión del navegador integrado; no se declara una nueva prueba visual aprobada para esta revisión.
+
+Ambos Hosting publicaron la revisión de textos; HTML y assets recuperados por HTTP coincidieron con sus compilaciones locales.
