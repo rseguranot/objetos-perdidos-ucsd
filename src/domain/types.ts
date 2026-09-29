@@ -66,6 +66,8 @@ export interface CatalogFilters {
 }
 
 export interface InternalFilters {
+  category?: string
+  itemType?: string
   building?: string
   query: string
   status: string

@@ -119,6 +119,8 @@ export default function AdminPanel({ items, session, demo, onCommit, blocked }: 
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
   const [building, setBuilding] = useState('')
+  const [category, setCategory] = useState<Category | ''>('')
+  const [itemType, setItemType] = useState('')
   const [destination, setDestination] = useState<'' | 'donacion' | 'remision_documentos' | 'pendiente90'>('')
   const [editing, setEditing] = useState<LostItem | null | undefined>(undefined)
   const [delivering, setDelivering] = useState<LostItem | null>(null)
@@ -129,12 +131,12 @@ export default function AdminPanel({ items, session, demo, onCommit, blocked }: 
   const [busy, setBusy] = useState(false)
   const receiveAllowed = canReceive(session)
   const invalidDates = Boolean(from && to && from > to)
-  const filtered = filterInternalItems(items, { query, status, from, to, building, disposition: destination })
+  const filtered = filterInternalItems(items, { query, status, from, to, building, category, itemType, disposition: destination })
   const reviewCount = filterInternalItems(items, { query: '', status: '', from: '', to: '', disposition: 'pendiente90' }).length
   const donatedCount = items.filter(item => item.disposition?.kind === 'donacion').length
   const remittedCount = items.filter(item => item.disposition?.kind === 'remision_documentos').length
   function destinationFilter(value: typeof destination) { setDestination(destination === value ? '' : value); setStatus('') }
-  function clearFilters() { setQuery(''); setStatus(''); setFrom(''); setTo(''); setBuilding(''); setDestination('') }
+  function clearFilters() { setQuery(''); setStatus(''); setFrom(''); setTo(''); setBuilding(''); setDestination(''); setCategory(''); setItemType('') }
   async function transition(next: LostItem, message: string) { await onCommit(items.map(item => item.id === next.id ? next : item), message); setError('') }
   async function action(run: () => Promise<void>) { try { setBusy(true); await run() } catch (cause) { setError(cause instanceof Error ? cause.message : 'No se pudo completar la operación.') } finally { setBusy(false) } }
   return <section className="admin-section" aria-labelledby="admin-title">
@@ -147,13 +149,16 @@ export default function AdminPanel({ items, session, demo, onCommit, blocked }: 
       <button className={`admin-stat ${destination === 'remision_documentos' ? 'selected' : ''}`} aria-pressed={destination === 'remision_documentos'} onClick={() => destinationFilter('remision_documentos')}><span>Documentos remitidos</span><strong>{remittedCount}</strong><span>A la institución emisora</span></button>
     </div></div>}
     {error && <Alert severity="error" onClose={() => setError('')} className="form-alert">{error}</Alert>}
-    <div className="admin-filters"><div className="admin-toolbar">
+    <div className="admin-filters"><div className="admin-classification">
+      <TextField select label="Categoría" value={category} onChange={event => { setCategory(event.target.value as Category | ''); setItemType('') }}><MenuItem value="">Todas las categorías</MenuItem>{Object.entries(CATEGORY_LABELS).map(([key, label]) => <MenuItem key={key} value={key}>{label}</MenuItem>)}</TextField>
+      {category && <TextField select label="Tipo de objeto" value={itemType} onChange={event => setItemType(event.target.value)}><MenuItem value="">Todos los tipos</MenuItem>{typesForCategory(category).map(type => <MenuItem key={type} value={type}>{TYPE_LABELS[type]}</MenuItem>)}</TextField>}
+    </div><div className="admin-toolbar">
       <TextField label="Buscar en el registro" value={query} onChange={event => setQuery(event.target.value)} slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRounded /></InputAdornment> } }} />
       <TextField select label="Estado" value={status} onChange={event => setStatus(event.target.value)}><MenuItem value="">Todos los estados</MenuItem>{Object.entries(STATUS_LABELS).map(([key, label]) => <MenuItem key={key} value={key}>{label}</MenuItem>)}</TextField>
       {receiveAllowed && <TextField select label="Seguimiento / destino" value={destination} onChange={event => setDestination(event.target.value as typeof destination)}><MenuItem value="">Todos</MenuItem><MenuItem value="pendiente90">90 días · pendiente de revisión</MenuItem><MenuItem value="donacion">Donación registrada</MenuItem><MenuItem value="remision_documentos">Remisión a su emisor</MenuItem></TextField>}
     </div><TextField select label="Edificio o lugar" value={building} onChange={e => setBuilding(e.target.value)} fullWidth sx={{ mb: 2 }}><MenuItem value="">Todos los edificios y lugares</MenuItem>{CAMPUS_NAMES.map(name => <MenuItem key={name} value={name}>{name}</MenuItem>)}<MenuItem value={LEGACY_LOCATION}>Ubicación sin edificio identificado</MenuItem></TextField><DateRangeFilter from={from} to={to} onChange={(nextFrom, nextTo) => { setFrom(nextFrom); setTo(nextTo) }} />
     {invalidDates && <Alert severity="warning" className="date-warning">La fecha inicial debe ser anterior o igual a la fecha final.</Alert>}
-    <div className="admin-results" role="status" aria-live="polite"><span>{invalidDates ? 'Revisa el rango de fechas' : `${filtered.length} ${filtered.length === 1 ? 'registro' : 'registros'}`}</span>{Boolean(query || status || from || to || building || destination) && <Button size="small" onClick={clearFilters}>Limpiar filtros</Button>}</div></div>
+    <div className="admin-results" role="status" aria-live="polite"><span>{invalidDates ? 'Revisa el rango de fechas' : `${filtered.length} ${filtered.length === 1 ? 'registro' : 'registros'}`}</span>{Boolean(query || status || from || to || building || destination || category || itemType) && <Button size="small" onClick={clearFilters}>Limpiar filtros</Button>}</div></div>
     <TableContainer className="admin-table"><Table aria-label="Registro interno de objetos perdidos" size="small"><TableHead><TableRow><TableCell>Objeto / código</TableCell><TableCell>Hallazgo</TableCell><TableCell>Estado</TableCell><TableCell>Plazo de custodia</TableCell><TableCell>Custodia / destino</TableCell><TableCell>Acciones</TableCell></TableRow></TableHead><TableBody>{filtered.map(item => {
       const retention = retentionInfo(item)
       return <TableRow key={item.id}>

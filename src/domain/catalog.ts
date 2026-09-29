@@ -127,6 +127,8 @@ export function filterInternalItems(items: LostItem[], filters: InternalFilters,
   return items.filter(item => {
     if (!isDate(item.foundDate)) return false
     if (filters.status && item.status !== filters.status) return false
+    if (filters.category && item.category !== filters.category) return false
+    if (filters.itemType && item.itemType !== filters.itemType) return false
     if (filters.building && !matchesBuilding(item.foundLocation, filters.building)) return false
     if (filters.from && item.foundDate < filters.from) return false
     if (filters.to && item.foundDate > filters.to) return false

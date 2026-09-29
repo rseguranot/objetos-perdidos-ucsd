@@ -7,10 +7,15 @@ import { authorizeItemChange, canManageRoles, canRegister, validateAccessChange,
 import type { LostItem, PublicItem } from '../domain/types'
 import { recordsEqual } from '../domain/records'
 import { appendUniversityExamples } from './seed'
+import { buildPilotExamples } from './pilot-examples'
+import { todayISO } from '../date'
+
+const pilotPreview = import.meta.env.DEV && !cloudMode && new URLSearchParams(window.location.search).get('preview') === 'pilot'
 
 const anonymous: Session = { uid: '', email: '', verified: false, role: null }
 function initialLocal() {
   if (cloudMode) return { items: [] as LostItem[], entries: [] as AccessEntry[], error: '' }
+  if (pilotPreview) return { items: buildPilotExamples(todayISO()), entries: [{ email: 'decanato.demo@ucsd.edu.do', role: 'decanato', active: true }] as AccessEntry[], error: '' }
   try {
     const entries = loadAccess()
     const loaded = loadItems()
@@ -80,20 +85,21 @@ export function useWorkspace() {
       const code = previous?.code ?? createItem(items, changed, session.email).code
       const tagged = { ...changed, code, createdByUid: previous?.createdByUid ?? session.uid, updatedByUid: session.uid }
       const result = previous ? items.map(item => item.id === tagged.id ? tagged : item) : [...items, tagged]
-      saveItems(result); setItems(result)
+      if (!pilotPreview) saveItems(result)
+      setItems(result)
     }
   }
   async function updateAccess(entry: AccessEntry): Promise<void> {
     const clean = validateAccessChange(session, entry)
     if (cloudMode) { const cloud = await import('./cloud'); await cloud.writeAccess(session, clean) }
-    else { const next = [...entries.filter(current => current.email !== clean.email), clean]; saveAccess(next); setEntries(next) }
+    else { const next = [...entries.filter(current => current.email !== clean.email), clean]; if (!pilotPreview) saveAccess(next); setEntries(next) }
   }
   async function removeAccess(entry: AccessEntry): Promise<void> {
     const email = validateAccessRemoval(session, entry)
     if (cloudMode) { const cloud = await import('./cloud'); await cloud.removeAccess(session, { ...entry, email }) }
-    else { const next = entries.filter(current => current.email !== email); saveAccess(next); setEntries(next) }
+    else { const next = entries.filter(current => current.email !== email); if (!pilotPreview) saveAccess(next); setEntries(next) }
   }
-  function resetLocal() { if (cloudMode) throw new Error('El restablecimiento solo existe en la demo.'); setItems(resetItems()); setLocalError('') }
+  function resetLocal() { if (cloudMode) throw new Error('El restablecimiento solo existe en la demo.'); setItems(pilotPreview ? buildPilotExamples(todayISO()) : resetItems()); setLocalError('') }
   return {
     items: cloudMode && !allowed ? [] : session.role === 'registro' ? items.filter(item => item.createdByUid === session.uid) : items,
     publicItems: cloudMode ? publicItems : projectPublicItems(items), entries: cloudMode && !roleAdmin ? [] : entries,
