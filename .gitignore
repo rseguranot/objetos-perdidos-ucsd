@@ -1,0 +1,8 @@
+node_modules/
+dist/
+dist-firebase/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+evidence/

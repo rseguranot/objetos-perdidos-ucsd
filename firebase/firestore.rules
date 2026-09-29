@@ -1,0 +1,236 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function verifiedInstitutionalGoogle() {
+      return request.auth != null
+        && request.auth.token.email is string
+        && request.auth.token.email_verified == true
+        && request.auth.token.firebase.sign_in_provider == 'google.com'
+        && request.auth.token.email.lower().matches('^[^@/]+@ucsd[.]edu[.]do$');
+    }
+    function email() { return request.auth.token.email.lower(); }
+    function accessPath() { return /databases/$(database)/documents/access/$(email()); }
+    function hasRole(roles) {
+      return verifiedInstitutionalGoogle()
+        && exists(accessPath())
+        && get(accessPath()).data.active == true
+        && get(accessPath()).data.role in roles;
+    }
+    function developer() {
+      // Identity alone never grants a role: the initial access document is provisioned outside this client.
+      return verifiedInstitutionalGoogle() && email() == 'rsegura20250554@ucsd.edu.do'
+        && hasRole(['developer']);
+    }
+    function staff() { return developer() || hasRole(['admin', 'decanato', 'registro']); }
+    function custodian() { return developer() || hasRole(['admin', 'decanato']); }
+    function admin() { return developer() || hasRole(['admin']); }
+    function canReadInternal(d) {
+      return custodian() || (hasRole(['registro']) && d.createdByUid == request.auth.uid);
+    }
+    function limitedQuery() { return request.query.limit != null && request.query.limit <= 500; }
+    function text(value, maximum) { return value is string && value.trim().size() > 0 && value.size() <= maximum; }
+    function calendarDate(value) {
+      let year = int(value[0:4]);
+      let month = int(value[5:7]);
+      let day = int(value[8:10]);
+      let leap = year % 400 == 0 || (year % 4 == 0 && year % 100 != 0);
+      return year >= 1 && (!(month in [4, 6, 9, 11]) || day <= 30)
+        && (month != 2 || day <= 28 || (day == 29 && leap));
+    }
+    function date(value) {
+      return value is string && value.matches('^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$')
+        && calendarDate(value);
+    }
+    function iso(value) {
+      return value is string && value.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[.][0-9]{3}Z$');
+    }
+    function classification(d) {
+      return (d.category == 'electronica' && d.itemType in ['celular', 'laptop', 'tableta', 'audifonos', 'estuche', 'cargador', 'cable', 'calculadora', 'dispositivo', 'otro'])
+        || (d.category == 'documentos' && d.itemType in ['identificacion', 'tarjeta', 'documento', 'sobre', 'carpeta', 'otro'])
+        || (d.category == 'llaves' && d.itemType in ['llave', 'juego_llaves', 'llavero', 'otro'])
+        || (d.category == 'material_academico' && d.itemType in ['cuaderno', 'libro', 'apuntes', 'carpeta', 'utiles', 'otro'])
+        || (d.category == 'bolsos_accesorios' && d.itemType in ['mochila', 'bulto', 'bolso', 'lentes', 'botella', 'paraguas', 'reloj', 'joya', 'monedero', 'otro'])
+        || (d.category == 'ropa' && d.itemType in ['chaqueta', 'gorra', 'camisa', 'calzado', 'prenda', 'otro'])
+        || (d.category == 'dinero' && d.itemType in ['efectivo', 'otro'])
+        || (d.category == 'otros' && d.itemType == 'otro');
+    }
+    function lastEventValid(d) {
+      let e = d.history[d.history.size() - 1];
+      return e is map && e.keys().hasAll(['id', 'at', 'actor', 'action'])
+        && e.keys().hasOnly(['id', 'at', 'actor', 'action'])
+        && text(e.id, 80) && iso(e.at)
+        && e.actor == email() && text(e.action, 300);
+    }
+    function historyAppended(before, after) {
+      return after.history.size() == before.history.size() + 1
+        && after.history == before.history.concat([after.history[after.history.size() - 1]]);
+    }
+    function deliveryValid(d) {
+      let v = d.get('delivery', null);
+      return (v == null && d.status in ['borrador', 'disponible', 'archivado'])
+        || (v is map && v.keys().hasAll(['recipient', 'proof', 'deliveredAt'])
+          && v.keys().hasOnly(['recipient', 'proof', 'deliveredAt', 'identityType', 'photoEvidenceReference'])
+          && text(v.recipient, 300) && text(v.proof, 2000) && iso(v.deliveredAt)
+          && ((!('identityType' in v) && !('photoEvidenceReference' in v)) || deliveryEvidenceValid(v))
+          && d.status in ['entregado', 'archivado']);
+    }
+    function deliveryEvidenceValid(v) {
+      return v.keys().hasAll(['identityType', 'photoEvidenceReference'])
+        && v.identityType in ['documento_identidad', 'carnet_estudiante']
+        && text(v.photoEvidenceReference, 300)
+        && v.photoEvidenceReference == v.photoEvidenceReference.trim();
+    }
+    function dispositionValid(d) {
+      let v = d.get('disposition', null);
+      return !('disposition' in d)
+        || (v is map && v.keys().hasAll(['kind', 'recipient', 'reference', 'completedAt'])
+          && v.keys().hasOnly(['kind', 'recipient', 'reference', 'completedAt'])
+          && text(v.recipient, 300) && v.recipient == v.recipient.trim()
+          && text(v.reference, 2000) && v.reference == v.reference.trim()
+          && iso(v.completedAt) && date(v.completedAt[0:10])
+          && v.completedAt.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9][.][0-9]{3}Z$')
+          && d.status == 'archivado' && d.received == true
+          && date(d.receivedDate) && text(d.custodyLocation, 300)
+          && !('delivery' in d)
+          && ((d.category == 'documentos' && v.kind == 'remision_documentos')
+            || (!(d.category in ['documentos', 'dinero']) && v.kind == 'donacion')));
+    }
+    function dispositionDeadline(receivedDate) {
+      // Receipt dates are local Santo Domingo dates (UTC-4); midnight is 04:00 UTC.
+      let receiptMidnightUtc = timestamp.date(int(receivedDate[0:4]), int(receivedDate[5:7]), int(receivedDate[8:10]));
+      return receiptMidnightUtc + duration.value(90, 'd') + duration.time(4, 0, 0, 0);
+    }
+    function dispositionMoment(value) {
+      return timestamp.date(int(value[0:4]), int(value[5:7]), int(value[8:10]))
+        + duration.time(int(value[11:13]), int(value[14:16]), int(value[17:19]), int(value[20:23]) * 1000000);
+    }
+    function retentionExpired(receivedDate) {
+      return request.time >= dispositionDeadline(receivedDate);
+    }
+    function newDisposition(before, after) {
+      return !('disposition' in before) && !('delivery' in before)
+        && before.status in ['borrador', 'disponible', 'archivado']
+        && before.received == true && date(before.receivedDate)
+        && text(before.custodyLocation, 300) && retentionExpired(before.receivedDate)
+        && 'disposition' in after && dispositionValid(after)
+        && dispositionMoment(after.disposition.completedAt) >= dispositionDeadline(before.receivedDate)
+        && dispositionMoment(after.disposition.completedAt) <= request.time + duration.value(5, 'm')
+        && after.diff(before).affectedKeys().hasOnly(['status', 'disposition', 'history', 'updatedByUid', 'updatedAt']);
+    }
+    function dispositionTransition(before, after) {
+      // A completed disposition is final: it cannot be rewritten, removed or edited.
+      return !('disposition' in before)
+        && (!('disposition' in after) || newDisposition(before, after));
+    }
+    function itemValid(d, itemId) {
+      return d.keys().hasAll(['id', 'code', 'title', 'category', 'itemType', 'description', 'foundDate', 'foundLocation', 'receivedDate', 'custodyLocation', 'privateDetails', 'received', 'status', 'history', 'createdByUid', 'updatedByUid', 'updatedAt'])
+        && d.keys().hasOnly(['id', 'code', 'title', 'category', 'itemType', 'description', 'foundDate', 'foundLocation', 'receivedDate', 'custodyLocation', 'privateDetails', 'received', 'status', 'history', 'delivery', 'disposition', 'createdByUid', 'updatedByUid', 'updatedAt'])
+        && d.id == itemId && text(d.code, 80) && text(d.title, 160)
+        && classification(d) && text(d.description, 2000)
+        && date(d.foundDate) && text(d.foundLocation, 300)
+        && d.receivedDate is string
+        && (d.receivedDate == '' || (date(d.receivedDate) && d.receivedDate >= d.foundDate))
+        && d.custodyLocation is string && d.custodyLocation.size() <= 300
+        && d.privateDetails is string && d.privateDetails.size() <= 4000
+        && d.received is bool
+        && (!d.received || (date(d.receivedDate) && text(d.custodyLocation, 300)))
+        && d.status in ['borrador', 'disponible', 'entregado', 'archivado']
+        && (!(d.status in ['disponible', 'entregado']) || d.received)
+        && d.history is list && d.history.size() > 0 && d.history.size() <= 1000
+        && lastEventValid(d) && deliveryValid(d) && dispositionValid(d)
+        && text(d.createdByUid, 128) && d.updatedByUid == request.auth.uid
+        && d.updatedAt == request.time;
+    }
+    function publicMatches(p, d) {
+      return p.keys().hasAll(['id', 'code', 'title', 'category', 'itemType', 'description', 'foundDate', 'foundLocation', 'status'])
+        && p.keys().hasOnly(['id', 'code', 'title', 'category', 'itemType', 'description', 'foundDate', 'foundLocation', 'status'])
+        && p.id == d.id && p.code == d.code && p.title == d.title
+        && p.category == d.category && p.itemType == d.itemType
+        && p.description == d.description && p.foundDate == d.foundDate
+        && p.foundLocation == d.foundLocation && p.status == 'disponible'
+        && d.status == 'disponible' && d.received == true
+        && date(d.receivedDate) && d.receivedDate >= d.foundDate
+        && text(d.custodyLocation, 300);
+    }
+    function publicationCoherent(d, itemId) {
+      let publicPath = /databases/$(database)/documents/publicItems/$(itemId);
+      return (d.status == 'disponible' && existsAfter(publicPath)
+          && publicMatches(getAfter(publicPath).data, d))
+        || (d.status != 'disponible' && !existsAfter(publicPath));
+    }
+    function registrationDraft(d) {
+      return d.status == 'borrador' && d.received == false
+        && d.receivedDate == '' && d.custodyLocation == '' && !('delivery' in d) && !('disposition' in d);
+    }
+    function validTransition(before, after) {
+      return (before.status == 'borrador' && after.status in ['borrador', 'disponible', 'archivado'])
+        || (before.status == 'disponible' && after.status in ['disponible', 'entregado', 'archivado'])
+        || (before.status == 'entregado' && after.status == 'archivado'
+          && after.diff(before).affectedKeys().hasOnly(['status', 'history', 'updatedByUid', 'updatedAt']))
+        || (before.status == 'archivado' && newDisposition(before, after));
+    }
+    function deliveryTransition(before, after) {
+      return (before.status == 'disponible' && after.status == 'entregado'
+          && deliveryEvidenceValid(after.delivery))
+        || after.get('delivery', null) == before.get('delivery', null);
+    }
+    function assignableAccess(targetEmail) {
+      return admin() && targetEmail != 'rsegura20250554@ucsd.edu.do'
+        && targetEmail.matches('^[^@/]+@ucsd[.]edu[.]do$') && targetEmail == targetEmail.lower()
+        && request.resource.data.keys().hasAll(['email', 'role', 'active', 'updatedByUid', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['email', 'role', 'active', 'updatedByUid', 'updatedAt'])
+        && request.resource.data.email == targetEmail
+        && request.resource.data.role in ['admin', 'registro', 'decanato']
+        && request.resource.data.active is bool
+        && request.resource.data.updatedByUid == request.auth.uid
+        && request.resource.data.updatedAt == request.time
+        && (targetEmail != email() || (request.resource.data.role == 'admin' && request.resource.data.active == true));
+    }
+    match /access/{targetEmail} {
+      // No auto-enrollment: a denied user can only inspect their own document.
+      allow get: if verifiedInstitutionalGoogle() && (targetEmail == email() || admin());
+      allow list: if admin() && limitedQuery();
+      // Developer cannot be granted, demoted or revoked by ANY app client, including Developer itself.
+      allow create: if assignableAccess(targetEmail);
+      allow update: if assignableAccess(targetEmail) && resource.data.role != 'developer';
+      allow delete: if false;
+    }
+    match /privateItems/{itemId} {
+      // Creation transactions need to verify that their generated ID is unused.
+      allow get: if staff() && (!exists(/databases/$(database)/documents/privateItems/$(itemId))
+        || canReadInternal(resource.data));
+      // A registro query must include where('createdByUid', '==', auth.uid).
+      allow list: if staff() && limitedQuery() && canReadInternal(resource.data);
+      allow create: if staff() && itemValid(request.resource.data, itemId)
+        && request.resource.data.createdByUid == request.auth.uid
+        && request.resource.data.status == 'borrador'
+        && request.resource.data.history.size() == 1
+        && !('delivery' in request.resource.data) && !('disposition' in request.resource.data)
+        && (custodian() || registrationDraft(request.resource.data))
+        && publicationCoherent(request.resource.data, itemId);
+      allow update: if staff() && itemValid(request.resource.data, itemId)
+        && request.resource.data.createdByUid == resource.data.createdByUid
+        && request.resource.data.code == resource.data.code
+        && historyAppended(resource.data, request.resource.data)
+        && deliveryTransition(resource.data, request.resource.data)
+        && dispositionTransition(resource.data, request.resource.data)
+        && ((custodian() && validTransition(resource.data, request.resource.data))
+          || (hasRole(['registro']) && resource.data.createdByUid == request.auth.uid
+            && registrationDraft(resource.data) && registrationDraft(request.resource.data)))
+        && publicationCoherent(request.resource.data, itemId);
+      allow delete: if false;
+    }
+    match /publicItems/{itemId} {
+      allow get: if true;
+      allow list: if limitedQuery();
+      allow create, update: if custodian()
+        && existsAfter(/databases/$(database)/documents/privateItems/$(itemId))
+        && publicMatches(request.resource.data, getAfter(/databases/$(database)/documents/privateItems/$(itemId)).data);
+      allow delete: if custodian()
+        && existsAfter(/databases/$(database)/documents/privateItems/$(itemId))
+        && getAfter(/databases/$(database)/documents/privateItems/$(itemId)).data.status in ['entregado', 'archivado']
+        && getAfter(/databases/$(database)/documents/privateItems/$(itemId)).data.updatedAt == request.time;
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}
