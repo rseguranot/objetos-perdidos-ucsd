@@ -18,7 +18,7 @@ No requiere credenciales, no realiza peticiones y muestra cantidades por categor
 
 ## Aplicación posterior a la revisión
 
-**Pendiente de autorización. No se ha ejecutado la carga ni una nueva publicación.**
+**Carga y publicación autorizadas y realizadas el 29/09/2026.** El piloto tiene 50 objetos ficticios; los ejemplos de QA permanecen separados.
 
 El responsable debe proporcionar temporalmente `UCSD_IMPORT_ACCESS_TOKEN` (token OAuth de Google Cloud con permiso administrativo de Firestore) y `UCSD_IMPORT_OWNER_UID` (UID Firebase real del Developer institucional). No usar contraseñas ni tokens Firebase ID. No guardar credenciales en Git, archivos de documentación o comandos compartidos. El permiso Developer debe estar previamente activo. Este importador usa IAM administrativo, no las reglas del cliente; no concede roles ni cambia reglas.
 
@@ -33,3 +33,13 @@ Referencias oficiales: [Firestore REST e IAM](https://firebase.google.com/docs/f
 ## Verificación local del 29 de septiembre de 2026
 
 61 pruebas aprobadas; lint y compilaciones Firebase/pruebas aprobados. Simulación del importador: 50 objetos. Navegador: las ocho categorías públicas dan 11, 6, 4, 8, 5, 10, 3 y 3 resultados respectivamente; gestión carga 50, Electrónica filtra 11 y Laptop filtra 1. «Limpiar filtros» devuelve los 50. No se observaron advertencias ni errores de consola durante la revisión local. Los filtros se revisaron también en vista móvil. No se ejecutó la importación remota ni se publicaron estas modificaciones.
+
+## Publicación del 29/09/2026
+
+Se cargaron 50 fichas privadas y sus 50 proyecciones públicas mediante un único commit administrativo. Se conservaron los permisos existentes y se comprobó billingEnabled=false antes de cargar. Hosting publicó 21 archivos del build de 3be2150, sin cambiar reglas ni el proyecto QA. Se preservó la referencia de la versión anterior en evidence/pilot-50-before-release.json para reversión de Hosting.
+
+Los dos dominios institucionales responden con HTML, recursos iniciales y panel AdminPanel idénticos al build local. En navegador, las ocho categorías públicas y de gestión dieron 11, 6, 4, 8, 5, 10, 3 y 3 registros. Developer cargó los 50 internos. Electrónica y tipo Laptop dieron 1 registro; limpiar filtros devolvió 50. La consulta anónima cargó 50 públicos y denegó fichas privadas, accesos y consultas fuera del límite.
+
+La consola conservaba dos advertencias de transporte Listen de las 15:00 UTC, anteriores a la carga/publicación; la lectura se recuperó y la revisión posterior mostró los 50 registros. No se observó un error que impidiera cargar. Esta revisión no modifica ni prueba entregas reales.
+
+URL: https://ucsd-objetos-perdidos.firebaseapp.com/ y https://ucsd-objetos-perdidos.web.app/. Evidencia visual: evidence/pilot-50-published.png. Los artefactos de evidence se mantienen fuera de Git.

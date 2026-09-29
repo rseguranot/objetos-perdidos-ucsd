@@ -1,6 +1,6 @@
 # Firebase: piloto institucional y proyecto de pruebas
 
-Estado actual: el piloto `ucsd-objetos-perdidos` está publicado y conectado. Se comprobó ingreso Google real de `rsegura20250554@ucsd.edu.do` en [firebaseapp.com](https://ucsd-objetos-perdidos.firebaseapp.com), UID en Authentication y permiso Developer explícito activo. Roles carga de forma protegida. El catálogo institucional permanece vacío; no se incorporaron hallazgos reales ni los ejemplos locales.
+Estado actual: el piloto `ucsd-objetos-perdidos` está publicado y conectado. Se comprobó ingreso Google real de `rsegura20250554@ucsd.edu.do` en [firebaseapp.com](https://ucsd-objetos-perdidos.firebaseapp.com), UID en Authentication y permiso Developer explícito activo. Roles carga de forma protegida. El catálogo institucional contiene 50 objetos ficticios UCSD-DEMO cargados con autorización el 29/09/2026. No se incorporaron hallazgos reales; ver [carga del piloto](carga-piloto.md).
 
 El piloto conserva Spark sin facturación, aplicación web registrada, Firestore Standard `(default)` en `nam5` y Authentication con Google y Email/Password habilitados. Las reglas finales, incluida optimización y fecha autoritativa, están publicadas en piloto y QA; las fuentes activas leídas por API coinciden con los archivos de cada entorno. Hosting final publicó 19 archivos en cada proyecto, con el codec y etiqueta QA corregida. Ambos conservan `billingEnabled: false` y proveedor contraseña habilitado. Los intentos previos con popup cerrado o retorno anónimo quedan como antecedentes; no describen el acceso actual.
 
