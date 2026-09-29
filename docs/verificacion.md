@@ -169,3 +169,9 @@ El formulario registra únicamente el edificio. El aula o detalle del hallazgo s
 Validación: 63 pruebas aprobadas, lint y builds Firebase/pruebas correctos. En navegador local se comprobó formulario sin aviso ni campo de aula y guardado del ejemplo UCSD-DEMO-0002: edificio EAL, Aula 206 conservada en descripción. Sin errores de consola durante esta prueba.
 
 Publicación comprobada: Hosting del piloto actualizado; ambos dominios sirven HTML, recursos iniciales y AdminPanel idénticos al build. Se abrió el formulario real con la sesión Developer y se confirmó ausencia del aviso informativo y del campo Aula o lugar específico. Se cerró sin guardar; siguen 50 registros. Evidencia: evidence/form-clean-published.png.
+
+## Ejemplos con estados y acciones · 29/09/2026
+
+El estado vigente del piloto es 50 objetos ficticios: 5 borradores, 30 disponibles, 7 entregados y 8 archivados. Archivado incluye 3 donados y 1 documento remitido; 3 disponibles tienen plazo cumplido. Las ocho categorías conservan resultados públicos. Véase [la guía de gestión y evidencia de la preparación](carga-piloto.md#gestionar-estados-desde-administrador-o-developer).
+
+67 pruebas, lint, tipos y builds Firebase/pruebas aprobados. Verificación real con sesión Developer: entrega, donación y archivo persisten en Firebase. Verificación administrativa de solo lectura: proyecciones públicas exactas para los 30 disponibles y ausencia de proyección para los 20 restantes. SDK anónimo: catálogo permitido y consultas privadas/de permisos/sin límite denegadas. Administrador se validó mediante autorización local y auditoría de reglas, sin login institucional adicional. Hosting del piloto actualizado; recursos de ambos dominios coinciden con el build. No se cambiaron reglas, permisos, facturación ni el proyecto QA. Las referencias de fotos y actas son simuladas; no representan archivos reales. Captura: `evidence/pilot-states-published.png`.

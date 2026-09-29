@@ -170,7 +170,7 @@ export default function AdminPanel({ items, session, demo, onCommit, blocked }: 
           {canEdit(session, item) && <Button size="small" disabled={blocked || busy} startIcon={<EditOutlined />} onClick={() => setEditing(item)}>Editar</Button>}
           {receiveAllowed && item.status === 'borrador' && <Button size="small" disabled={blocked || busy} startIcon={<PublishOutlined />} onClick={() => { void action(() => transition(publishItem(item, session.email), 'Objeto publicado en el catálogo.')) }}>Publicar</Button>}
           {receiveAllowed && item.status === 'disponible' && <Button size="small" disabled={blocked || busy} startIcon={<TaskAltRounded />} onClick={() => setDelivering(item)}>Entregar</Button>}
-          {receiveAllowed && canDispose(item) && <Button size="small" disabled={blocked || busy} onClick={() => setDisposing(item)}>Registrar destino</Button>}
+          {receiveAllowed && canDispose(item) && <Button size="small" disabled={blocked || busy} onClick={() => setDisposing(item)}>{item.category === 'documentos' ? 'Remitir documento' : 'Donar'}</Button>}
           <Button size="small" startIcon={<HistoryRounded />} onClick={() => setInspecting(item)}>Historial</Button>
           {receiveAllowed && item.status !== 'archivado' && <Button size="small" disabled={blocked || busy} startIcon={<ArchiveOutlined />} onClick={() => setArchiving(item)}>Archivar</Button>}
         </div></TableCell>
