@@ -59,15 +59,22 @@ nav { display: flex; align-items: center; gap: 22px; }
 .found-tag div > span { font-size: 10px; color: #84907e; display: block; margin-top: 3px; }
 @keyframes hero-float {
   0%, 100% { transform: translate3d(0, 0, 0) rotate(var(--float-tilt, 0deg)); }
-  50% { transform: translate3d(0, var(--float-rise, -10px), 0) rotate(calc(var(--float-tilt, 0deg) + var(--float-sway, 2deg))); }
+  50% { transform: translate3d(var(--float-drift, 0px), var(--float-rise, -16px), 0) rotate(calc(var(--float-tilt, 0deg) + var(--float-sway, 3deg))); }
 }
 @media (prefers-reduced-motion: no-preference) {
   .hero-art .floating-object, .hero-art .found-tag, .hero-art .art-star { animation: hero-float var(--float-duration, 8s) ease-in-out var(--float-delay, 0s) infinite; }
-  .floating-object.headphones { --float-tilt: -9deg; --float-duration: 7.5s; }
-  .floating-object.keys { --float-tilt: 13deg; --float-rise: -12px; --float-sway: -3deg; --float-duration: 9s; --float-delay: -3s; }
-  .floating-object.backpack { --float-tilt: 8deg; --float-rise: -8px; --float-sway: -2deg; --float-duration: 8.5s; --float-delay: -5s; }
-  .found-tag { --float-tilt: 3deg; --float-rise: -6px; --float-sway: -1deg; --float-duration: 10s; --float-delay: -2s; }
-  .art-star { --float-rise: -5px; --float-sway: 5deg; --float-duration: 6s; --float-delay: -1s; }
+  .floating-object.headphones { --float-tilt: -9deg; --float-drift: 6px; --float-duration: 4.8s; --float-delay: -1.2s; }
+  .floating-object.keys { --float-tilt: 13deg; --float-rise: -24px; --float-drift: -6px; --float-sway: -5deg; --float-duration: 5.6s; --float-delay: -3s; }
+  .floating-object.backpack { --float-tilt: 8deg; --float-rise: -12px; --float-drift: -5px; --float-sway: -4deg; --float-duration: 6.2s; --float-delay: -2s; }
+  .found-tag { --float-tilt: 3deg; --float-rise: -10px; --float-drift: 4px; --float-sway: -2deg; --float-duration: 5.2s; --float-delay: -1s; }
+  .art-star { --float-rise: -8px; --float-sway: 8deg; --float-duration: 3.8s; --float-delay: -1s; }
+}
+@media (max-width: 600px) and (prefers-reduced-motion: no-preference) {
+  .floating-object.headphones { --float-rise: -12px; --float-drift: 3px; }
+  .floating-object.keys { --float-rise: -14px; --float-drift: -3px; }
+  .floating-object.backpack { --float-rise: -10px; --float-drift: -3px; }
+  .found-tag { --float-rise: -8px; --float-drift: 2px; }
+  .art-star { --float-rise: -6px; }
 }
 .catalog-section { padding: 60px 0 44px; }
 .section-heading { display: flex; justify-content: space-between; gap: 20px; align-items: center; margin-bottom: 27px; }
