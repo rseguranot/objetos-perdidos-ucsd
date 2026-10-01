@@ -195,6 +195,20 @@ nav { display: flex; align-items: center; gap: 22px; }
 .admin-filters { background: #fff; border: 1px solid #e0e5d8; padding: 20px; border-radius: 13px; margin-bottom: 20px; }
 .admin-filters .admin-toolbar { margin-bottom: 0; }
 .admin-results { display: flex; gap: 16px; align-items: center; min-height: 32px; margin-top: 14px; font-size: 12px; color: #73826b; }
+.admin-heading-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.admin-filter-search { margin-bottom: 22px; }
+.admin-filter-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px 16px; }
+.admin-filter-building { grid-column: 1 / -1; }
+.admin-filter-dates { margin-top: 22px; padding: 20px 0 0; border-top: 1px solid #e7ece3; }
+.admin-filter-dates .date-filters { margin: 0; align-items: center; }
+.admin-filters .MuiOutlinedInput-root { border-radius: 10px; background: #fcfdfb; }
+.admin-results { justify-content: space-between; padding-top: 14px; border-top: 1px solid #e7ece3; }
+.report-download-content { padding-top: 12px !important; }
+.report-formats { display: grid; gap: 12px; margin-top: 22px; }
+.report-formats .MuiButton-root { justify-content: flex-start; padding: 15px; border-radius: 11px; }
+.report-formats .MuiButton-root > span:last-child { margin-left: auto; font-size: 11px; font-weight: 400; color: #687c70; }
+@media (max-width: 900px) { .admin-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .admin-filter-grid { grid-template-columns: 1fr; gap: 18px; } .admin-heading-actions { width: 100%; } .admin-heading-actions > .MuiButton-root { flex: 1; } .admin-filter-dates .date-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; } .admin-filter-dates .date-filters > .MuiTextField-root { width: 100%; } .admin-filter-dates .date-presets { grid-column: 1 / -1; } }
 .retention-section { margin-bottom: 26px; }
 .retention-section > p { font-size: 13px; margin: 0 0 14px; color: #36523f; }
 .retention-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }

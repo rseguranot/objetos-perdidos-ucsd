@@ -135,6 +135,8 @@ Cloud Functions y Cloud Storage no forman parte de esta entrega. No incluye carg
 
 ## Documentación y verificación
 
+- [Reportes exportables](docs/reportes-exportables.md): PDF en nueva pestaña, Excel y CSV por año, alcance de los datos y verificación.
+
 - [Arquitectura y mantenimiento](docs/arquitectura.md): módulos, datos públicos e internos, operaciones, límites y recuperación.
 - [Protocolo propuesto](docs/protocolo-propuesto.md): recepción, custodia, reclamación, entrega y destinos tras 90 días.
 - [Preparación de Firebase](docs/firebase-setup.md): configuración, acceso institucional, reglas y pasos pendientes.
