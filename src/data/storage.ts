@@ -38,9 +38,11 @@ function validItem(value: unknown): value is LostItem {
   if (!Array.isArray(value.history) || !value.history.every(entry => isRecord(entry) && ['id', 'at', 'actor', 'action'].every(field => typeof entry[field] === 'string'))) return false
   const delivery = value.delivery
   if (delivery !== undefined && (!isRecord(delivery) || !['recipient', 'proof', 'deliveredAt'].every(field => typeof delivery[field] === 'string'))) return false
-  if (isRecord(delivery) && (delivery.identityType !== undefined || delivery.photoEvidenceReference !== undefined)) {
+  if (isRecord(delivery) && (delivery.identityType !== undefined || delivery.photoEvidenceReference !== undefined || delivery.evidenceId !== undefined)) {
     if (!['documento_identidad', 'carnet_estudiante'].includes(String(delivery.identityType))) return false
-    if (typeof delivery.photoEvidenceReference !== 'string' || !delivery.photoEvidenceReference.trim() || delivery.photoEvidenceReference.length > 300) return false
+    if (delivery.evidenceId !== undefined) {
+      if (typeof delivery.evidenceId !== 'string' || !/^[a-zA-Z0-9_-]{20,80}$/.test(delivery.evidenceId) || delivery.photoEvidenceReference !== undefined) return false
+    } else if (typeof delivery.photoEvidenceReference !== 'string' || !delivery.photoEvidenceReference.trim() || delivery.photoEvidenceReference.length > 300) return false
   }
   const disposition = value.disposition
   if (disposition !== undefined) {

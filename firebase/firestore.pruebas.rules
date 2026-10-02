@@ -88,16 +88,19 @@ service cloud.firestore {
     function deliveryValid(d) {
       let v = d.get('delivery', null);
       return (v == null && d.status in ['borrador', 'disponible', 'archivado'])
-        || (v is map && v.keys().hasOnly(['recipient', 'proof', 'deliveredAt', 'identityType', 'photoEvidenceReference'])
+        || (v is map && v.keys().hasOnly(['recipient', 'proof', 'deliveredAt', 'identityType', 'photoEvidenceReference', 'evidenceId'])
           && text(v.recipient, 300) && text(v.proof, 2000) && iso(v.deliveredAt)
-          && ((!('identityType' in v) && !('photoEvidenceReference' in v)) || deliveryEvidenceValid(v))
+          && ((!('identityType' in v) && !('photoEvidenceReference' in v) && !('evidenceId' in v)) || deliveryEvidenceValid(v))
           && d.status in ['entregado', 'archivado']);
     }
     function deliveryEvidenceValid(v) {
-      return v.keys().hasAll(['identityType', 'photoEvidenceReference'])
+      return v.keys().hasAll(['identityType'])
         && v.identityType in ['documento_identidad', 'carnet_estudiante']
-        && text(v.photoEvidenceReference, 300)
-        && v.photoEvidenceReference == v.photoEvidenceReference.trim();
+        && (('evidenceId' in v && !('photoEvidenceReference' in v)
+          && v.evidenceId is string && v.evidenceId.matches('^[a-zA-Z0-9_-]{20,80}$'))
+          || (!('evidenceId' in v) && 'photoEvidenceReference' in v
+            && text(v.photoEvidenceReference, 300)
+            && v.photoEvidenceReference == v.photoEvidenceReference.trim()));
     }
     function dispositionValid(d) {
       return !('disposition' in d) || dispositionDetailsValid(d.disposition, d);
@@ -242,18 +245,8 @@ service cloud.firestore {
         && publicationCoherent(after, itemId);
     }
     function deliveryUpdateAllowed(before, after, itemId, role) {
-      // All other fields were validated when this available record was saved.
-      // Revalidating them during an atomic delivery/public deletion exceeds the
-      // Firestore rules expression budget.
-      return role in ['developer', 'admin', 'decanato']
-        && before.status == 'disponible' && after.status == 'entregado'
-        && after.diff(before).affectedKeys().hasOnly(['status', 'delivery', 'deliveryDate', 'searchTerms', 'history', 'updatedByUid', 'updatedAt'])
-        && after.updatedByUid == request.auth.uid && after.updatedAt == request.time
-        && historyAppended(before, after) && after.history.size() <= 1000 && lastEventValid(after)
-        && deliveryValid(after) && after.delivery.keys().hasAll(['identityType', 'photoEvidenceReference'])
-        && after.searchTerms is list && after.searchTerms.size() <= 500
-        && after.deliveryDate is string && after.deliveryDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
-        && !existsAfter(/databases/$(database)/documents/publicItems/$(itemId));
+      // Only the photo service commits new handovers through IAM.
+      return false;
     }
     function archiveDeliveredAllowed(before, after, itemId, role) {
       // The delivered record was validated at handover. Archiving changes only
@@ -351,6 +344,12 @@ service cloud.firestore {
         && publicMatches(request.resource.data, getAfter(/databases/$(database)/documents/privateItems/$(itemId)).data);
       allow delete: if publicDeleteAllowed(itemId);
     }
+    match /deliveryEvidence/{evidenceId} {
+      allow get: if staff();
+      allow list: if staff() && request.query.limit != null && request.query.limit <= 25;
+      allow write: if false;
+    }
+    match /evidenceOperations/{operationId} { allow read, write: if false; }
     match /{document=**} { allow read, write: if false; }
   }
 }

@@ -93,7 +93,7 @@ El panel de acceso ofrece **Google** y **Correo y contraseña**. Esta última es
 
 ## Entrega con identificación y evidencia externa
 
-El estudiante debe acreditar la propiedad y presentar documento de identidad o carné de estudiante. El personal revisa la identificación presencialmente y toma evidencia de la entrega junto al objeto, según el protocolo que apruebe UCSD. Las nuevas entregas requieren receptor, prueba de propiedad, tipo de identificación verificada y referencia de la fotografía externa, además de la confirmación del operador. La app no solicita número de documento, no toma imágenes, no carga archivos y no guarda la foto. Fecha y responsable quedan en el historial. Los registros anteriores se conservan sin inventar evidencia.
+El estudiante debe acreditar la propiedad y presentar documento de identidad o carné de estudiante. El personal revisa la identificación presencialmente; la app no solicita números ni fotografías del documento. QA permite seleccionar entre una y tres fotos de la entrega, con vista previa y reemplazo; Apps Script las guarda en Drive privado y confirma la entrega en Firestore. El personal activo las consulta en **Evidencias**, sin publicarlas en el catálogo. La demo local simula este proceso sin conservar imágenes. El piloto conserva por ahora las referencias externas hasta activar su servicio independiente. Las entregas anteriores se conservan sin exigir fotografías retroactivas.
 
 Para las direcciones publicadas y la evaluación de fotografías, consultar [alojamiento y evidencia externa](docs/alojamiento-y-evidencia.md).
 
@@ -131,10 +131,11 @@ Firestore guarda `disposition.completedAt` con hora autoritativa del servidor; l
 
 El piloto propone [Firebase Hosting](https://firebase.google.com/docs/hosting), Firestore y autenticación con Google en [Spark](https://firebase.google.com/docs/projects/billing/firebase-pricing-plans), manteniendo la facturación deshabilitada. El objetivo es US$0 de infraestructura dentro de las cuotas; superar límites puede interrumpir operaciones o el servicio. Desarrollo, mantenimiento y atención del decanato requieren tiempo. Antes de operar, acordar administración institucional del proyecto y confirmar el acceso de la cuenta inicial.
 
-Cloud Functions y Cloud Storage no forman parte de esta entrega. No incluye carga ni almacenamiento de fotografías, compra de dominio o componentes comerciales. Cloud Storage para Firebase requiere Blaze actualmente; se conserva Spark sin facturación y se propone custodia manual de evidencias externas.
+Cloud Functions y Cloud Storage no forman parte de esta entrega. Las fotografías privadas de QA se guardan mediante Apps Script en Drive institucional; Firestore conserva su constancia. No se compró dominio ni espacio adicional y no se añadieron dependencias para esta integración. Firebase continúa en Spark sin facturación. Apps Script y Drive tienen cuotas y políticas institucionales; el objetivo de cero gasto adicional no implica disponibilidad garantizada.
 
 ## Documentación y verificación
 
+- [Fotografías privadas con Drive y estado de validación](docs/evidencias-drive.md): QA publicado, subida y visor privados comprobados; configuración independiente del piloto pendiente.
 - [Reportes exportables](docs/reportes-exportables.md): PDF en nueva pestaña, Excel y CSV por año, alcance de los datos y verificación.
 
 - [Arquitectura y mantenimiento](docs/arquitectura.md): módulos, datos públicos e internos, operaciones, límites y recuperación.
@@ -149,6 +150,6 @@ La revisión de capacidad aprobó **77 pruebas automatizadas de Node**, tipos, l
 
 Una donación ficticia se guardó en QA aunque el navegador perdió la respuesta del commit y mostró conexión no disponible. Se corrigió el reintento para reconocer la misma operación ya persistida sin volver a escribir: compara registro completo, historial, actor, UID y código; solo normaliza la fecha autoritativa del destino nuevo. Otros cambios conservan el aviso de conflicto. El parche anterior se republicó en ambos Hosting. Una nueva donación ficticia desde Decanato cerró el diálogo sin error, mostró Donado y conservó exactamente creación + un evento de donación con fecha del servidor. Esa prueba no forzó otra pérdida de respuesta; la recuperación de ese caso está cubierta por pruebas de lógica y revisión. Las cinco lecturas anónimas de entonces aprobaron antes de la carga de 50 objetos del piloto.
 
-QA tiene paginación, reglas, índices y métricas verificados. Para uso con datos reales siguen pendientes la propiedad institucional de Firebase, el protocolo, las cuentas operativas y un criterio para vigilar cuotas. No se creó almacenamiento de fotografías.
+QA tiene paginación, reglas, índices, métricas y fotografías privadas verificados. Para uso con datos reales siguen pendientes la propiedad institucional de Firebase, el protocolo, información al reclamante, conservación de fotos, cuentas operativas y vigilancia de cuotas. La captura en teléfono físico sigue pendiente; no se utilizaron fotografías reales.
 
 Vista previa de los 50 objetos y carga posterior del piloto: [docs/carga-piloto.md](docs/carga-piloto.md).

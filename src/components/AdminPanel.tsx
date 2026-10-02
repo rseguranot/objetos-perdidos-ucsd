@@ -27,6 +27,8 @@ import InputAdornment from '@mui/material/InputAdornment'
 import CategoryIcon from './CategoryIcon'
 import DateRangeFilter from './DateRangeFilter'
 import ReportDownload from './ReportDownload'
+import EvidencePhotoPicker from './EvidencePhotoPicker'
+import type { PreparedPhoto } from '../data/evidence-photos'
 import type { PageResult } from './PublicCatalog'
 import type { StaffMetrics } from '../data/metrics'
 import { CAMPUS_NAMES, LEGACY_LOCATION, joinFoundLocation, locationForEditing } from '../domain/campus'
@@ -69,31 +71,34 @@ function ItemForm({ item, items, session, onCommit, onClose }: { item: LostItem 
   </div></fieldset></DialogContent><DialogActions><Button disabled={saving} onClick={onClose}>Cancelar</Button><Button disabled={saving} variant="contained" type="submit">{saving ? 'Guardando…' : `Guardar ${item ? 'cambios' : 'borrador'}`}</Button></DialogActions></form></Dialog>
 }
 
-function DeliveryForm({ item, demo, onSave, onClose }: { item: LostItem; demo: boolean; onSave: (delivery: DeliveryInput) => Promise<void>; onClose: () => void }) {
+function DeliveryForm({ item, demo, onSave, onClose }: { item: LostItem; demo: boolean; onSave: (delivery: DeliveryInput, photos: PreparedPhoto[], operationId: string) => Promise<void>; onClose: () => void }) {
   const [recipient, setRecipient] = useState('')
   const [proof, setProof] = useState('')
   const [identityType, setIdentityType] = useState<IdentityType | ''>('')
-  const [photoEvidenceReference, setPhotoEvidenceReference] = useState('')
+  const [photos, setPhotos] = useState<PreparedPhoto[]>([])
+  const [preparingPhotos, setPreparingPhotos] = useState(false)
+  const operation = useRef(crypto.randomUUID())
   const [confirmed, setConfirmed] = useState(false)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   async function save(event: React.FormEvent) {
     event.preventDefault()
-    if (!confirmed || !identityType) { setError('Confirma la verificación presencial de identidad y la custodia de la foto externa.'); return }
-    try { setSaving(true); await onSave({ recipient, proof, identityType, photoEvidenceReference }) } catch (cause) { setError(cause instanceof Error ? cause.message : 'No se pudo registrar la entrega.') } finally { setSaving(false) }
+    if (saving || preparingPhotos) return
+    if (!confirmed || !identityType || photos.length < 1) { setError('Confirma la identidad y selecciona al menos una foto de la entrega.'); return }
+    try { setSaving(true); await onSave({ recipient, proof, identityType }, photos, operation.current) } catch (cause) { setError(cause instanceof Error ? cause.message : 'No se pudo registrar la entrega.') } finally { setSaving(false) }
   }
   return <Dialog open onClose={() => !saving && onClose()} fullWidth maxWidth="sm" aria-labelledby="delivery-title"><form onSubmit={event => { void save(event) }}><DialogTitle id="delivery-title">Registrar entrega</DialogTitle><DialogContent>
     <p><strong>{item.title}</strong> · {item.code}</p>
 
     {error && <Alert severity="error">{error}</Alert>}
     <fieldset disabled={saving} className="form-fieldset"><div className="form-grid">
-      <TextField required label={demo ? 'Receptor ficticio' : 'Receptor'} value={recipient} onChange={e => setRecipient(e.target.value)} className="form-full" slotProps={{ htmlInput: { maxLength: 300 } }} />
-      <TextField required label="Cómo se comprobó la propiedad" multiline minRows={2} value={proof} onChange={e => setProof(e.target.value)} className="form-full" slotProps={{ htmlInput: { maxLength: 2000 } }} />
-      <TextField required select label="Identificación verificada" value={identityType} onChange={e => setIdentityType(e.target.value as IdentityType)} helperText="Registra solo el tipo; no copies el número ni una imagen del documento." className="form-full"><MenuItem value="documento_identidad">Documento de identidad</MenuItem><MenuItem value="carnet_estudiante">Carné de estudiante</MenuItem></TextField>
-      <TextField required label="Referencia de foto externa" placeholder={`${item.code}-entrega`} value={photoEvidenceReference} onChange={e => setPhotoEvidenceReference(e.target.value)} helperText="Código o nombre del archivo en la custodia externa acordada. La app no toma ni carga fotos. Evita enlaces públicos." slotProps={{ htmlInput: { maxLength: 300 } }} className="form-full" />
-      <FormControlLabel className="form-full" control={<Checkbox checked={confirmed} onChange={e => setConfirmed(e.target.checked)} />} label={demo ? 'Confirmo la simulación de identidad verificada y foto de entrega guardada externamente.' : 'Confirmo identidad verificada y foto de entrega guardada en la custodia externa autorizada.'} />
+      <TextField required label={demo ? 'Receptor ficticio' : 'Receptor'} value={recipient} onChange={e => { operation.current = crypto.randomUUID(); setRecipient(e.target.value) }} className="form-full" slotProps={{ htmlInput: { maxLength: 300 } }} />
+      <TextField required label="Cómo se comprobó la propiedad" multiline minRows={2} value={proof} onChange={e => { operation.current = crypto.randomUUID(); setProof(e.target.value) }} className="form-full" slotProps={{ htmlInput: { maxLength: 2000 } }} />
+      <TextField required select label="Identificación verificada" value={identityType} onChange={e => { operation.current = crypto.randomUUID(); setIdentityType(e.target.value as IdentityType) }} helperText="Registra solo el tipo; no copies el número ni una imagen del documento." className="form-full"><MenuItem value="documento_identidad">Documento de identidad</MenuItem><MenuItem value="carnet_estudiante">Carné de estudiante</MenuItem></TextField>
+      <div className="form-full"><EvidencePhotoPicker value={photos} disabled={saving} onBusyChange={setPreparingPhotos} onChange={next => { operation.current = crypto.randomUUID(); setPhotos(next) }} /></div>
+      <FormControlLabel className="form-full" control={<Checkbox checked={confirmed} onChange={e => setConfirmed(e.target.checked)} />} label={demo ? 'Confirmo la simulación de identidad y entrega.' : 'Confirmo la identidad del receptor y la entrega del objeto.'} />
     </div></fieldset>
-  </DialogContent><DialogActions><Button disabled={saving} onClick={onClose}>Cancelar</Button><Button disabled={saving || !confirmed} variant="contained" type="submit">{saving ? 'Guardando…' : 'Confirmar entrega'}</Button></DialogActions></form></Dialog>
+  </DialogContent><DialogActions><Button disabled={saving} onClick={onClose}>Cancelar</Button><Button disabled={saving || preparingPhotos || !confirmed || !photos.length} variant="contained" type="submit">{saving ? 'Guardando…' : 'Confirmar entrega'}</Button></DialogActions></form></Dialog>
 }
 
 function DispositionForm({ item, onSave, onClose }: { item: LostItem; demo: boolean; onSave: (recipient: string, reference: string) => Promise<void>; onClose: () => void }) {
@@ -133,9 +138,10 @@ interface AdminPanelProps {
   reportYear?: number
   onReportYearChange?: (year: number) => void
   refreshToken?: number
+  onDelivery?: (item: LostItem, delivery: DeliveryInput, photos: PreparedPhoto[], operationId: string) => Promise<void>
 }
 
-export default function AdminPanel({ items, session, demo, onCommit, blocked, loadPage, loadItem, onItemsLoaded, metrics, reportYear, onReportYearChange, refreshToken = 0 }: AdminPanelProps) {
+export default function AdminPanel({ items, session, demo, onCommit, blocked, loadPage, loadItem, onItemsLoaded, metrics, reportYear, onReportYearChange, refreshToken = 0, onDelivery }: AdminPanelProps) {
   const [query, setQuery] = useState('')
   const [remoteQuery, setRemoteQuery] = useState('')
   const [status, setStatus] = useState('')
@@ -285,12 +291,17 @@ export default function AdminPanel({ items, session, demo, onCommit, blocked, lo
     })}{!filtered.length && !remoteLoading && !remoteError && <TableRow><TableCell colSpan={6}>No hay registros para estos filtros.</TableCell></TableRow>}</TableBody></Table></TableContainer>
     {loadPage && currentPage && <div className="load-more" role="group" aria-label="Paginación del registro interno"><Button variant="outlined" disabled={page === 1 || remoteLoading} onClick={() => setPage(page - 1)}>Anterior</Button><span>Página {page}</span><Button variant="outlined" disabled={!remoteHasMore || remoteLoading} onClick={() => { void nextRemotePage() }}>Siguiente</Button></div>}
     {editing !== undefined && <ItemForm key={editing?.id ?? 'new'} item={editing} items={actionItems} session={session} demo={demo} onCommit={onCommit} onClose={() => setEditing(undefined)} />}
-    {delivering && <DeliveryForm item={delivering} demo={demo} onClose={() => setDelivering(null)} onSave={async delivery => { await transition(deliverItem(delivering, delivery, session.email), 'Entrega registrada. El objeto ya no aparece como disponible.'); setDelivering(null) }} />}
+    {delivering && <DeliveryForm item={delivering} demo={demo} onClose={() => setDelivering(null)} onSave={async (delivery, photos, operationId) => {
+      if (onDelivery) await onDelivery(delivering, delivery, photos, operationId)
+      else if (demo) await transition(deliverItem(delivering, { ...delivery, evidenceId: operationId }, session.email), 'Entrega simulada. Las fotografías no se guardan en la demo local.')
+      else throw new Error('El servicio de fotografías aún no está configurado.')
+      setDelivering(null)
+    }} />}
     {disposing && <DispositionForm item={disposing} demo={demo} onClose={() => setDisposing(null)} onSave={async (recipient, reference) => { await transition(disposeItem(disposing, { kind: disposing.category === 'documentos' ? 'remision_documentos' : 'donacion', recipient, reference }, session.email), 'Destino final registrado. El objeto se archivó y su historial se conserva.'); setDisposing(null) }} />}
     <Dialog open={Boolean(archiving)} onClose={() => !busy && setArchiving(null)} aria-labelledby="archive-title"><DialogTitle id="archive-title">¿Archivar este registro?</DialogTitle><DialogContent><p>{archiving?.title} · {archiving?.code}</p><p>Dejará de aparecer en el catálogo. Los datos y el historial se conservarán en el panel interno. Archivar no registra una donación.</p></DialogContent><DialogActions><Button disabled={busy} onClick={() => setArchiving(null)}>Cancelar</Button><Button variant="contained" disabled={busy || blocked} onClick={() => { void action(async () => { if (archiving) { await transition(archiveItem(archiving, session.email), 'Registro archivado.'); setArchiving(null) } }) }}>Confirmar archivo</Button></DialogActions></Dialog>
     <Dialog open={Boolean(inspecting)} onClose={() => setInspecting(null)} fullWidth maxWidth="sm" aria-labelledby="history-title"><DialogTitle id="history-title">Registro interno e historial</DialogTitle><DialogContent>{inspecting && <>
       <h3>{inspecting.title} · {inspecting.code}</h3><dl className="detail-fields"><div><dt>Recepción confirmada</dt><dd>{inspecting.received ? 'Sí' : 'No'}</dd></div><div><dt>Fecha de recepción</dt><dd>{inspecting.receivedDate || 'Pendiente'}</dd></div><div><dt>Ubicación de custodia registrada</dt><dd>{inspecting.custodyLocation || 'Pendiente'}</dd></div><div><dt>Características reservadas</dt><dd>{inspecting.privateDetails || 'Sin detalles adicionales'}</dd></div>
-      {inspecting.delivery && <><div><dt>{demo ? 'Receptor ficticio' : 'Receptor'}</dt><dd>{inspecting.delivery.recipient}</dd></div><div><dt>Prueba de propiedad registrada</dt><dd>{inspecting.delivery.proof}</dd></div><div><dt>Identificación verificada</dt><dd>{inspecting.delivery.identityType === 'carnet_estudiante' ? 'Carné de estudiante' : inspecting.delivery.identityType === 'documento_identidad' ? 'Documento de identidad' : 'Registro anterior · sin constancia del tipo'}</dd></div><div><dt>Evidencia fotográfica externa</dt><dd>{inspecting.delivery.photoEvidenceReference ?? 'Registro anterior · sin referencia'}<span className="table-subtitle">La imagen no se almacena en esta herramienta.</span></dd></div></>}
+      {inspecting.delivery && <><div><dt>{demo ? 'Receptor ficticio' : 'Receptor'}</dt><dd>{inspecting.delivery.recipient}</dd></div><div><dt>Prueba de propiedad registrada</dt><dd>{inspecting.delivery.proof}</dd></div><div><dt>Identificación verificada</dt><dd>{inspecting.delivery.identityType === 'carnet_estudiante' ? 'Carné de estudiante' : inspecting.delivery.identityType === 'documento_identidad' ? 'Documento de identidad' : 'Registro anterior · sin constancia del tipo'}</dd></div><div><dt>Fotografías de entrega</dt><dd>{inspecting.delivery.evidenceId ? 'Disponible en Evidencias' : inspecting.delivery.photoEvidenceReference ?? 'Registro anterior · sin referencia'}</dd></div></>}
       {inspecting.disposition && <><div><dt>Destino final</dt><dd>{inspecting.disposition.kind === 'donacion' ? 'Donación' : 'Remisión a institución emisora'}</dd></div><div><dt>Organización / institución receptora</dt><dd>{inspecting.disposition.recipient}</dd></div><div><dt>Constancia del traslado</dt><dd>{inspecting.disposition.reference}</dd></div><div><dt>Fecha del destino</dt><dd>{new Date(inspecting.disposition.completedAt).toLocaleString('es-DO', { timeZone: 'America/Santo_Domingo' })}</dd></div></>}
       </dl><ol className="history-list">{inspecting.history.toReversed().map(entry => <li key={entry.id}><strong>{entry.action}</strong><span>{entry.actor}</span><time dateTime={entry.at}>{new Date(entry.at).toLocaleString('es-DO')}</time></li>)}</ol>
     </>}</DialogContent><DialogActions><Button onClick={() => setInspecting(null)}>Cerrar</Button></DialogActions></Dialog>

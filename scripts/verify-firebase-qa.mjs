@@ -106,12 +106,20 @@ try {
   delete malformedDelivery.delivery.identityType
   delete malformedDelivery.delivery.photoEvidenceReference
   await denied(() => persist(malformedDelivery, true), 'Entrega nueva exige identificación y evidencia externa')
-  item = deliverItem(item, { recipient: 'Estudiante ficticio', proof: 'Marca ficticia comprobada.', identityType: 'carnet_estudiante', photoEvidenceReference: 'QA-EVIDENCIA-EXTERNA-FICTICIA' }, accounts.decanato.email)
-  await persist(item, true)
-  console.log('Entrega remota aprobada.')
-  assert.equal((await getDoc(doc(db, 'publicItems', item.id))).exists(), false)
+  if (process.env.UCSD_EVIDENCE_ENABLED === 'true') {
+    await denied(() => persist(validDelivery(accounts.decanato.email), true), 'El cliente no confirma entregas fuera del servicio de fotografías')
+    const invented = deliverItem(item, { recipient: 'Estudiante ficticio', proof: 'Marca ficticia comprobada.', identityType: 'carnet_estudiante', evidenceId: 'evidencia-inventada-para-qa-0001' }, accounts.decanato.email)
+    await denied(() => persist(invented, true), 'Una referencia inventada no permite confirmar la entrega')
+    assert.equal((await getDoc(doc(db, 'publicItems', item.id))).exists(), true)
+    console.log('Entrega directa denegada; el flujo con fotografías se comprueba por separado.')
+  } else {
+    item = validDelivery(accounts.decanato.email)
+    await persist(item, true)
+    console.log('Entrega externa histórica remota aprobada.')
+    assert.equal((await getDoc(doc(db, 'publicItems', item.id))).exists(), false)
+  }
   item = archiveItem(item, accounts.decanato.email)
-  await persist(item)
+  await persist(item, process.env.UCSD_EVIDENCE_ENABLED === 'true')
   console.log('Archivo remoto aprobado.')
   assert.equal((await getDoc(doc(db, 'privateItems', item.id))).data()?.status, 'archivado')
   await login('admin')
@@ -147,7 +155,7 @@ try {
     await denied(() => persist(disposed, false), 'Un destino final completado no se puede reescribir')
     console.log(`Destino final remoto aprobado: ${kind}.`)
   }
-  console.log(`Flujo remoto QA aprobado: registro → recepción → publicación → consulta anónima → entrega → archivo. ID ${item.id}.`)
+  console.log(`Flujo remoto QA aprobado: registro → recepción → publicación → consulta anónima → ${process.env.UCSD_EVIDENCE_ENABLED === 'true' ? 'rechazo de entrega directa' : 'entrega externa'} → archivo. ID ${item.id}.`)
 } finally {
   clearTimeout(deadline)
   for (const connection of connections.values()) {

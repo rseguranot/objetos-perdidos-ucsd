@@ -40,7 +40,8 @@ export function authorizeItemChange(session: Session, previous: LostItem | undef
     if (previous.delivery && !recordsEqual(previous.delivery, next.delivery)) throw new Error('No se puede modificar ni eliminar una entrega registrada.')
     if (next.delivery && !previous.delivery) {
       if (!canReceive(session) || previous.status !== 'disponible' || next.status !== 'entregado') throw new Error('Solo el decanato puede entregar un objeto disponible.')
-      if (!['documento_identidad', 'carnet_estudiante'].includes(next.delivery.identityType ?? '') || !next.delivery.photoEvidenceReference?.trim() || next.delivery.photoEvidenceReference.length > 300) throw new Error('Confirma el documento presentado y registra la referencia externa de la fotografía de entrega.')
+      const evidenceValid = next.delivery.evidenceId ? /^[a-zA-Z0-9_-]{20,80}$/.test(next.delivery.evidenceId) && !next.delivery.photoEvidenceReference : Boolean(next.delivery.photoEvidenceReference?.trim()) && (next.delivery.photoEvidenceReference?.length ?? 301) <= 300
+      if (!['documento_identidad', 'carnet_estudiante'].includes(next.delivery.identityType ?? '') || !evidenceValid) throw new Error('Confirma el documento presentado y registra la evidencia de la fotografía de entrega.')
     }
     if (previous.disposition) throw new Error('El registro tiene un destino final y es inmutable.')
     if (!recordsEqual(previous.history, next.history.slice(0, previous.history.length))) throw new Error('No se puede modificar ni eliminar el historial anterior.')

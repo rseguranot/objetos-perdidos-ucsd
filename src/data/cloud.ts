@@ -52,6 +52,7 @@ export async function removeAccess(session: Session, entry: AccessEntry): Promis
   await deleteDoc(doc(database(), 'access', email))
 }
 export async function writeItem(session: Session, previous: LostItem | undefined, next: LostItem): Promise<void> {
+  if (next.delivery && !previous?.delivery) throw new Error('Registra la entrega mediante el servicio de fotografías.')
   authorizeItemChange(session, previous, next)
   const reference = doc(database(), 'privateItems', next.id)
   // UUID completo evita que dos operadores generen el mismo código secuencial.

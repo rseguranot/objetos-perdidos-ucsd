@@ -237,17 +237,17 @@ export function publishItem(item: LostItem, actor: string): LostItem {
   return withHistory({ ...item, ...clean, status: 'disponible' }, 'Recepción confirmada y objeto publicado', actor)
 }
 
-export function deliverItem(item: LostItem, delivery: { recipient: string; proof: string; identityType?: IdentityType; photoEvidenceReference?: string }, actor: string): LostItem {
+export function deliverItem(item: LostItem, delivery: { recipient: string; proof: string; identityType?: IdentityType; photoEvidenceReference?: string; evidenceId?: string }, actor: string): LostItem {
   if (item.status !== 'disponible') throw new Error('Solo se puede entregar un objeto disponible.')
   if (!delivery.recipient.trim() || !delivery.proof.trim()) throw new Error('Indica el receptor y cómo se comprobó la propiedad.')
   if (delivery.recipient.trim().length > 300) throw new Error('El receptor admite hasta 300 caracteres.')
   if (delivery.proof.trim().length > 2000) throw new Error('La prueba de propiedad admite hasta 2000 caracteres.')
   if (!['documento_identidad', 'carnet_estudiante'].includes(delivery.identityType ?? '')) throw new Error('Indica el documento de identidad o carné de estudiante verificado.')
   const photoEvidenceReference = delivery.photoEvidenceReference?.trim() ?? ''
-  if (!photoEvidenceReference || photoEvidenceReference.length > 300) throw new Error('Indica la referencia de la evidencia fotográfica externa (hasta 300 caracteres).')
+  if (delivery.evidenceId ? !/^[a-zA-Z0-9_-]{20,80}$/.test(delivery.evidenceId) || Boolean(photoEvidenceReference) : !photoEvidenceReference || photoEvidenceReference.length > 300) throw new Error('Indica una evidencia fotográfica válida (referencia externa hasta 300 caracteres).')
   return withHistory({ ...item, status: 'entregado', delivery: {
     recipient: delivery.recipient.trim(), proof: delivery.proof.trim(), deliveredAt: new Date().toISOString(),
-    identityType: delivery.identityType, photoEvidenceReference,
+    identityType: delivery.identityType, ...(delivery.evidenceId ? { evidenceId: delivery.evidenceId } : { photoEvidenceReference }),
   } }, 'Objeto entregado; propiedad e identidad comprobadas y evidencia externa registrada', actor)
 }
 

@@ -21,7 +21,8 @@ export interface DeliveryInput {
   recipient: string
   proof: string
   identityType: IdentityType
-  photoEvidenceReference: string
+  photoEvidenceReference?: string
+  evidenceId?: string
 }
 
 export interface HistoryEntry {
@@ -49,7 +50,7 @@ export interface LostItem {
   createdByUid?: string
   updatedByUid?: string
   // Optional evidence fields preserve historical deliveries; new deliveries require both.
-  delivery?: { recipient: string; proof: string; deliveredAt: string; identityType?: IdentityType; photoEvidenceReference?: string }
+  delivery?: { recipient: string; proof: string; deliveredAt: string; identityType?: IdentityType; photoEvidenceReference?: string; evidenceId?: string }
   disposition?: { kind: 'donacion' | 'remision_documentos'; recipient: string; reference: string; completedAt: string }
 }
 

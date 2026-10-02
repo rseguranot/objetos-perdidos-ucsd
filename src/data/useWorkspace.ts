@@ -123,5 +123,6 @@ export function useWorkspace() {
     publicItems: cloudMode ? [] as PublicItem[] : projectPublicItems(items), entries: cloudMode && !roleAdmin ? [] : entries,
     session, error, loading, privateLoading, capped, commit, updateAccess, removeAccess, resetLocal, setDemoEmail,
     publicCount, refreshToken, loadPublicPage, loadPrivatePage, loadPrivateItem, loadMetrics, setCloudItems: setItems,
+    refreshAfterDelivery: () => setRefreshToken(value => value + 1),
   }
 }
