@@ -1,8 +1,8 @@
 # Fotografías privadas de entrega
 
-## Estado al 2 de octubre de 2026
+## Estado al 3 de octubre de 2026
 
-Implementado y publicado en [QA](https://ucsd-objetos-perdidos-pruebas.web.app). El piloto conserva por ahora las referencias externas: falta configurar su servicio y carpeta independientes. No se habilitó facturación ni se añadieron dependencias.
+Implementado y publicado en [QA](https://ucsd-objetos-perdidos-pruebas.web.app) y en el [piloto](https://ucsd-objetos-perdidos.firebaseapp.com/?acceso=google). Ambos tienen servicio y carpeta privados independientes. Las nuevas entregas requieren una a tres fotos; se conservan las referencias externas de entregas históricas. No se habilitó facturación ni se añadieron dependencias.
 
 Se verificó acceso al panel Apps Script con `rsegura20250554@ucsd.edu.do` y se creó el proyecto aislado **UCSD Evidencias — Prueba de puente QA**. El editor es:
 
@@ -12,7 +12,9 @@ El servicio independiente **UCSD Evidencias — Piloto** ya está creado y prepa
 
 https://script.google.com/home/projects/17ikq0tw716K-fwuT4tzYMY-zD32b5ISNcfhzLx_Mn_CNNWceo7KSI39Z/edit
 
-Su ejecución de preparación está detenida en el consentimiento Google de Drive, Datastore y conexiones externas. Se solicitó confirmación expresa para esta aplicación distinta de QA. No completar ni publicar el piloto sin esa respuesta; no se ha creado aún su carpeta por la ejecución pendiente. Después de preparar sus propiedades, retirar `setupPilot` antes de desplegar el código final. Esta función temporal contiene únicamente configuración del entorno y debe quedar fuera del repositorio.
+El 3 de octubre el usuario autorizó expresamente Drive, Datastore, conexiones externas y publicación. Después de reconectar Chrome, `setupPilot` completó la preparación de la carpeta privada y las propiedades. Se retiró esa función temporal y se publicó el código final como versión 1 a las 20:41 de Santo Domingo, ejecutado por la propietaria y con endpoint HTMLService accesible sin sesión Google. Las operaciones de datos siguen exigiendo token Firebase y permiso activo. `.env.firebase.local` incorpora la URL del servicio; permanece fuera de Git.
+
+Hosting y reglas del piloto se publicaron juntos. Ambos dominios sirvieron HTML idéntico al build. Con la sesión institucional Developer se comprobó el selector publicado, una entrega con tres imágenes ficticias de 640 × 480 y el visor privado. Se archivó únicamente el objeto nuevo de prueba «Cuaderno prueba fotos piloto»: la API confirmó entrega y constancia conservadas, tres archivos asociados y ausencia de publicación. Las consultas anónimas de registro privado y constancia fueron denegadas. El proyecto conserva `billingEnabled: false`. Los 50 ejemplos anteriores no se modificaron; quedó un ejemplo adicional archivado.
 
 La conexión con Chrome se recuperó. La sonda se desplegó y respondió correctamente desde un iframe local: HTMLService → google.script.run → respuesta al origen exacto. Se comprobó en escritorio y con viewport de 390 × 844; falta la prueba en un teléfono físico. Esta sonda no solicita acceso a Drive ni comprueba todavía una entrega con fotografías.
 
@@ -37,10 +39,10 @@ Las 103 pruebas locales aprobaron permisos simulados, formato de fotografías, t
 1. En el editor guardar la versión final de `apps-script/service/Code.gs`, sin `setupQa`. Actualizar el despliegue QA a una nueva versión; comprobar la URL y la propietaria efectiva.
 2. Comprobar que `FOLDER_ID` apunta a la carpeta privada QA y que no tenga lectores ni editores adicionales. Comprobar permisos Firestore de la propietaria y validar una operación de listado autenticada.
 3. La configuración local `.env.pruebas.local` ya incorpora la URL de Apps Script. Iniciar `npm run dev -- --mode pruebas --port 5180 --strictPort`. Nunca incluir `.env.*.local` ni credenciales en Git.
-4. Dos objetos dedicados ya están disponibles en QA: «Cuaderno evidencia QA 1 fotos» (`44f64324-b18a-4a27-ad6b-1d796f83297e`) y «Cuaderno evidencia QA 3 fotos» (`e58355c4-b787-4baa-b20c-ec6b50cb79a4`). Usar imágenes ficticias. `scripts/verify-evidence-qa.mjs prepare` crea nuevos ejemplos; no hace falta repetirlo para los dos existentes.
+4. Los dos objetos dedicados de QA ya están archivados: «Cuaderno evidencia QA 1 fotos» (`44f64324-b18a-4a27-ad6b-1d796f83297e`) y «Cuaderno evidencia QA 3 fotos» (`e58355c4-b787-4baa-b20c-ec6b50cb79a4`). Sus evidencias permanecen consultables. Usar imágenes ficticias; `scripts/verify-evidence-qa.mjs prepare` permite crear nuevos ejemplos cuando se necesite otra entrega.
 5. Una vez operativo el servicio, publicar las reglas QA y comprobar selector → subida → entrega → visor. Ejecutar `node scripts/verify-evidence-qa.mjs check <id>` con `UCSD_QA_CREDENTIALS_FILE` apuntando al archivo local externo al repositorio. Comprueba constancia, número de fotos, retirada pública, restricciones de Registro/visitante y archiva únicamente el ejemplo dedicado, preservando entrega y fecha histórica.
 6. `scripts/verify-firebase-qa.mjs` admite `UCSD_EVIDENCE_ENABLED=true` para exigir denegación de entregas directas y referencias inventadas con las nuevas reglas. Sin esta variable conserva la prueba del protocolo anterior; no usar esa modalidad tras activar fotografías.
-7. Probar roles, revocación, archivos inválidos, pérdida de respuesta, concurrencia y teléfono físico antes de crear el servicio y carpeta independientes del piloto. Solo entonces publicar Hosting y reglas del piloto.
+7. Mantener pruebas de roles, revocación, archivos inválidos, pérdida de respuesta y concurrencia. El usuario autorizó continuar la publicación sin teléfono disponible; esa comprobación física sigue pendiente. QA y piloto ya están publicados, con subida y visor comprobados en escritorio.
 
 La función REST [projects.test](https://firebase.google.com/docs/reference/rules/rest/v1/projects/test) se usó inicialmente para compilar fuentes. Después se publicó QA y se realizaron las verificaciones SDK y del flujo con fotos descritas arriba. Los pasos anteriores sirven para reproducir la configuración; no deben repetirse como si QA siguiera vacío.
 

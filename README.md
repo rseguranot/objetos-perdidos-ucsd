@@ -93,7 +93,7 @@ El panel de acceso ofrece **Google** y **Correo y contraseña**. Esta última es
 
 ## Entrega con identificación y evidencia externa
 
-El estudiante debe acreditar la propiedad y presentar documento de identidad o carné de estudiante. El personal revisa la identificación presencialmente; la app no solicita números ni fotografías del documento. QA permite seleccionar entre una y tres fotos de la entrega, con vista previa y reemplazo; Apps Script las guarda en Drive privado y confirma la entrega en Firestore. El personal activo las consulta en **Evidencias**, sin publicarlas en el catálogo. La demo local simula este proceso sin conservar imágenes. El piloto conserva por ahora las referencias externas hasta activar su servicio independiente. Las entregas anteriores se conservan sin exigir fotografías retroactivas.
+El estudiante debe acreditar la propiedad y presentar documento de identidad o carné de estudiante. El personal revisa la identificación presencialmente; la app no solicita números ni fotografías del documento. QA y piloto permiten seleccionar entre una y tres fotos de la entrega, con vista previa y reemplazo; Apps Script las guarda en Drive privado y confirma la entrega en Firestore. El personal activo las consulta en **Evidencias**, sin publicarlas en el catálogo. La demo local simula este proceso sin conservar imágenes. El piloto utiliza su servicio y carpeta independientes. Las entregas anteriores se conservan sin exigir fotografías retroactivas.
 
 Para las direcciones publicadas y la evaluación de fotografías, consultar [alojamiento y evidencia externa](docs/alojamiento-y-evidencia.md).
 
@@ -131,11 +131,11 @@ Firestore guarda `disposition.completedAt` con hora autoritativa del servidor; l
 
 El piloto propone [Firebase Hosting](https://firebase.google.com/docs/hosting), Firestore y autenticación con Google en [Spark](https://firebase.google.com/docs/projects/billing/firebase-pricing-plans), manteniendo la facturación deshabilitada. El objetivo es US$0 de infraestructura dentro de las cuotas; superar límites puede interrumpir operaciones o el servicio. Desarrollo, mantenimiento y atención del decanato requieren tiempo. Antes de operar, acordar administración institucional del proyecto y confirmar el acceso de la cuenta inicial.
 
-Cloud Functions y Cloud Storage no forman parte de esta entrega. Las fotografías privadas de QA se guardan mediante Apps Script en Drive institucional; Firestore conserva su constancia. No se compró dominio ni espacio adicional y no se añadieron dependencias para esta integración. Firebase continúa en Spark sin facturación. Apps Script y Drive tienen cuotas y políticas institucionales; el objetivo de cero gasto adicional no implica disponibilidad garantizada.
+Cloud Functions y Cloud Storage no forman parte de esta entrega. Las fotografías privadas de QA y piloto se guardan mediante Apps Script en Drive institucional; Firestore conserva su constancia. No se compró dominio ni espacio adicional y no se añadieron dependencias para esta integración. Firebase continúa en Spark sin facturación. Apps Script y Drive tienen cuotas y políticas institucionales; el objetivo de cero gasto adicional no implica disponibilidad garantizada.
 
 ## Documentación y verificación
 
-- [Fotografías privadas con Drive y estado de validación](docs/evidencias-drive.md): QA publicado, subida y visor privados comprobados; configuración independiente del piloto pendiente.
+- [Fotografías privadas con Drive y estado de validación](docs/evidencias-drive.md): QA y piloto publicados, servicios y carpetas separados; subida y visor privados comprobados en escritorio.
 - [Reportes exportables](docs/reportes-exportables.md): PDF en nueva pestaña, Excel y CSV por año, alcance de los datos y verificación.
 
 - [Arquitectura y mantenimiento](docs/arquitectura.md): módulos, datos públicos e internos, operaciones, límites y recuperación.
