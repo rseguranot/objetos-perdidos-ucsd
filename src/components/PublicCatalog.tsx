@@ -34,9 +34,10 @@ interface PublicCatalogProps {
   loadPage?: (filters: CatalogFilters, cursor: unknown | null) => Promise<PageResult<PublicItem>>
   publicCount?: number
   refreshToken?: number
+  onReadyChange?: (ready: boolean) => void
 }
 
-export default function PublicCatalog({ items, loadPage, publicCount, refreshToken = 0 }: PublicCatalogProps) {
+export default function PublicCatalog({ items, loadPage, publicCount, refreshToken = 0, onReadyChange }: PublicCatalogProps) {
   const [query, setQuery] = useState('')
   const [remoteQuery, setRemoteQuery] = useState('')
   const [category, setCategory] = useState('')
@@ -79,6 +80,8 @@ export default function PublicCatalog({ items, loadPage, publicCount, refreshTok
   }, [loadPage, filterKey, filters, invalidDates])
   const currentPages = remotePages.key === filterKey ? remotePages.pages : []
   const currentPage = currentPages[page - 1]
+  const ready = !loadPage || Boolean(currentPage) || Boolean(remoteError)
+  useEffect(() => { onReadyChange?.(ready) }, [ready, onReadyChange])
   const visible = invalidDates ? [] : loadPage ? currentPage?.items ?? [] : results.slice(0, page * 6)
   const remoteHasMore = Boolean(currentPage?.hasMore || currentPages[page])
   const currentPeriod = currentCatalogPeriod()

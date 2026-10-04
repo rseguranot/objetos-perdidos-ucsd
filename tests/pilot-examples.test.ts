@@ -16,7 +16,7 @@ test('50 ejemplos válidos y públicos cubren las ocho categorías sin datos res
   for (const category of Object.keys(CATEGORY_LABELS)) assert.ok(projected.some(item => item.category === category))
   for (const item of items) {
     assert.ok(isCompatibleType(item.category, item.itemType))
-    assert.ok(item.description.includes('Objeto ficticio.'))
+    assert.ok(!/fictici[oa]/i.test(item.description))
     assert.equal(item.delivery, undefined)
     assert.equal(item.disposition, undefined)
   }

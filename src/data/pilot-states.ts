@@ -14,7 +14,7 @@ export function planPilotStates(items: LostItem[], date: string, actor: string, 
   return items.map(item => {
     const match = /^demo-pilot-(\d{3})$/.exec(item.id)
     const n = Number(match?.[1])
-    if (!match || n < 1 || n > 50 || item.code !== `UCSD-DEMO-${String(n).padStart(4, '0')}` || !item.description.includes('Objeto ficticio.')) throw new Error('Este plan solo admite los ejemplos ficticios conocidos.')
+    if (!match || n < 1 || n > 50 || item.code !== `UCSD-DEMO-${String(n).padStart(4, '0')}` || !/fictici[oa]/i.test(item.privateDetails)) throw new Error('Este plan solo admite los ejemplos ficticios conocidos.')
     if (item.history.some(entry => entry.action === PILOT_STATES_MARKER)) return item
     const affected = [6, 16, 21, 30].includes(n) || n >= 31 && n <= 49
     if (!affected) return item

@@ -41,7 +41,7 @@ export function buildPilotExamples(date: string, uid = 'demo:decanato.demo@ucsd.
       id, code: `UCSD-DEMO-${String(index + 1).padStart(4, '0')}`,
       title: source.title.replace(/ · revisión.*$/, ''), category: source.category,
       itemType: source.title === 'Cargador de laptop' ? 'cargador' : source.itemType,
-      description: `${source.description} Objeto ficticio.`, foundDate,
+      description: source.description, foundDate,
       foundLocation: exampleCampusLocation(index + 1), received: true, receivedDate: foundDate,
       custodyLocation: `Custodia ficticia · caja ${Math.ceil((index + 1) / 5)}`,
       privateDetails: source.category === 'dinero' ? 'Monto ficticio RD$125; denominaciones reservadas.' : `Marca reservada ficticia ${index + 1}.`,
