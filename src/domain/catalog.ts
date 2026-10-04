@@ -182,17 +182,28 @@ function withHistory(item: LostItem, action: string, actor: string): LostItem {
   return { ...item, history: [...item.history.map(entry => ({ ...entry })), history(action, actor)] }
 }
 
+function publicDonation(item: LostItem): boolean {
+  const disposition = item.disposition
+  if (item.status !== 'archivado' || item.delivery || disposition?.kind !== 'donacion' || ['documentos', 'dinero'].includes(item.category)) return false
+  if (!disposition.recipient.trim() || disposition.recipient.length > 300 || !disposition.reference.trim() || disposition.reference.length > 2000 || !isDate(item.receivedDate)) return false
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(disposition.completedAt)) return false
+  const completed = Date.parse(disposition.completedAt)
+  // The same deadline as Firestore: 90 calendar days after receipt at midnight in Santo Domingo.
+  const deadline = Date.parse(`${item.receivedDate}T04:00:00.000Z`) + RETENTION_DAYS * DAY_MS
+  return Number.isFinite(completed) && new Date(completed).toISOString() === disposition.completedAt && completed >= deadline
+}
+
 export function projectPublicItems(items: LostItem[]): PublicItem[] {
-  return items.filter(item => !item.disposition && ((item.status === 'disponible' && !item.delivery) || (['entregado', 'archivado'].includes(item.status) && Boolean(item.delivery))) && item.received && item.custodyLocation.trim() && isDate(item.foundDate) && isDate(item.receivedDate) && item.receivedDate >= item.foundDate).map(item => ({
+  return items.filter(item => ((!item.disposition && ((item.status === 'disponible' && !item.delivery) || (['entregado', 'archivado'].includes(item.status) && Boolean(item.delivery)))) || publicDonation(item)) && item.received && item.custodyLocation.trim() && isDate(item.foundDate) && isDate(item.receivedDate) && item.receivedDate >= item.foundDate).map(item => ({
     id: item.id, code: item.code, title: item.title, category: item.category, itemType: item.itemType,
-    description: item.description, foundDate: item.foundDate, foundLocation: item.foundLocation, status: item.delivery ? 'entregado' : 'disponible',
+    description: item.description, foundDate: item.foundDate, foundLocation: item.foundLocation, status: item.delivery ? 'entregado' : item.disposition ? 'donado' : 'disponible',
   }))
 }
 
 export function filterPublicCatalog(items: PublicItem[], filters: CatalogFilters): PublicItem[] {
   const words = normalize(filters.query).split(/\s+/).filter(Boolean)
   return items.filter(item => {
-    if (!['disponible', 'entregado'].includes(item.status) || !isDate(item.foundDate)) return false
+    if (!['disponible', 'entregado', 'donado'].includes(item.status) || !isDate(item.foundDate)) return false
     if (filters.category && item.category !== filters.category) return false
     if (filters.itemType && item.itemType !== filters.itemType) return false
     if (filters.location && !matchesBuilding(item.foundLocation, filters.location) && item.foundLocation !== filters.location) return false

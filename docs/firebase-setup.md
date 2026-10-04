@@ -115,7 +115,7 @@ Antes de operar con objetos reales, evaluar contraseña institucional y verifica
 
 ## Recuperar fichas públicas de entregas históricas
 
-El cambio de catálogo conserva como Entregado la ficha de un objeto con entrega, aunque internamente se haya archivado. Para las entregas anteriores que ya no tienen ficha pública, utilizar `scripts/backfill-public-deliveries.mjs`. No altera objetos privados, estados, entregas, métricas históricas ni fotografías. Construye las fichas con `projectPublicItems` y `buildPublicIndex`, sin copiar campos privados.
+El cambio de catálogo conserva como Entregado la ficha de un objeto con entrega, aunque internamente se haya archivado. También conserva como Donado las donaciones válidas registradas tras 90 días. Para las entregas o donaciones anteriores que ya no tienen ficha pública, utilizar `scripts/backfill-public-deliveries.mjs`. Por defecto no altera objetos privados, estados, entregas, métricas históricas ni fotografías. Construye las fichas con `projectPublicItems` y `buildPublicIndex`, sin copiar campos privados.
 
 La ejecución requiere OAuth administrativo local en `UCSD_IMPORT_ACCESS_TOKEN` y un proyecto explícito. El token se mantiene en el entorno: no guardarlo en Git, archivos o historial de comandos. Sin `--apply`, lee y muestra el número de cambios previstos, sin escribir documentos ni crear un respaldo:
 
@@ -133,4 +133,16 @@ Para el piloto cambiar únicamente el proyecto a `ucsd-objetos-perdidos`, despu�
 
 El script rechaza registros sin marca ficticia, inspecciona hasta 10.000 objetos y admite hasta 200 fichas por aplicación. Su transacción vuelve a leer los registros y sus fichas, compara versiones y usa precondiciones para no sobrescribir cambios concurrentes. Si encuentra un conflicto, repetir la simulación. Es idempotente: una ficha ya idéntica no se vuelve a escribir; después de aplicarlo, una nueva simulación debe indicar cero cambios. No habilita facturación, no migra fotos ni elimina publicaciones existentes.
 
-Publicar primero el servicio y las reglas compatibles con la proyección de Entregado, aplicar la preparación en QA y comprobar lectura anónima sin campos privados, historial y visor. La preparación de producción con datos reales requiere revisión distinta: este script está acotado a ejemplos ficticios.
+Publicar primero el servicio y las reglas compatibles con las proyecciones de Entregado y Donado, aplicar la preparación en QA y comprobar lectura anónima sin campos privados, historial y visor. La preparación de producción con datos reales requiere revisión distinta: este script está acotado a ejemplos ficticios.
+
+
+### Fechas antiguas de donaciones
+
+Si una donación ficticia válida conserva `disposition.completedAt` como texto ISO, `--normalize-legacy-donations` prepara su ficha pública y convierte únicamente ese campo a timestamp del mismo instante. Ejecutar primero sin `--apply`: el informe distingue `privateWrites`, identificadores normalizados y fichas previstas. Con `--apply`, respalda ambos documentos y confirma el cambio con máscara exacta `disposition.completedAt`, transacción y precondiciones. Conserva destinatario, constancia, estado, historial y `updatedAt`; no genera una donación nueva ni modifica su fecha efectiva. Sin el flag, esas donaciones se omiten y se informan.
+
+```powershell
+node scripts/backfill-public-deliveries.mjs --project=ucsd-objetos-perdidos-pruebas --normalize-legacy-donations
+node scripts/backfill-public-deliveries.mjs --project=ucsd-objetos-perdidos-pruebas --normalize-legacy-donations --apply
+```
+
+El catálogo muestra el estado solamente en Ver detalles. Conserva disponibles, entregados y donados; remisiones, borradores y archivos comunes permanecen fuera de las consultas públicas. Destinatario, constancia, custodia y fotografías continúan privados.

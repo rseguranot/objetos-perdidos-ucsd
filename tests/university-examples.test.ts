@@ -16,7 +16,7 @@ test('ejemplos universitarios se agregan una vez sin reemplazar registros ni col
   assert.doesNotThrow(() => parseItems(extended))
 })
 
-test('semilla completa conserva originales y ejemplos de destinos finales solo internos', () => {
+test('semilla conserva disponibles, entregados y donados; las remisiones permanecen privadas', () => {
   assert.equal(SEED_ITEMS.length, 37)
   assert.equal(UNIVERSITY_EXAMPLES.filter(item => item.disposition?.kind === 'donacion').length, 2)
   assert.equal(UNIVERSITY_EXAMPLES.filter(item => item.disposition?.kind === 'remision_documentos').length, 1)
@@ -25,5 +25,6 @@ test('semilla completa conserva originales y ejemplos de destinos finales solo i
   assert.equal(published.filter(item => item.status === 'disponible').length, 30)
   assert.equal(published.filter(item => item.status === 'entregado').length, 1)
   assert.equal(published.some(item => 'disposition' in item), false)
-  assert.equal(published.some(item => item.title.includes('donado') || item.title.includes('remitida')), false)
+  assert.equal(published.filter(item => item.status === 'donado').length, 2)
+  assert.equal(published.some(item => item.title.includes('remitida')), false)
 })

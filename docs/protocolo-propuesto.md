@@ -53,7 +53,7 @@ La ausencia de coincidencias significa que no hay un registro público que coinc
 - Guardar cada objeto en una ubicación interna identificada y mantener actualizado su registro.
 - Registrar la devolución después de verificar propiedad: constancia mínima del receptor, evidencia de validación, fecha y personal responsable. En la demo, todos esos datos deben ser ficticios.
 - Cambiar a **entregado**: deja de contar como disponible, pero su ficha permanece consultable para posibles reclamaciones. No publicar quién lo recibió ni sus fotografías.
-- Usar **archivado** para cerrar un registro interno por una razón documentada. Si tuvo entrega, su ficha pública conserva la etiqueta Entregado. Archivar no equivale a devolver el objeto ni autoriza desecharlo.
+- Usar **archivado** para cerrar un registro interno por una razón documentada. Si tuvo entrega, su ficha pública conserva el estado Entregado. Una donación registrada tras el plazo conserva su ficha como Donado. Esos estados se muestran al abrir Ver detalles. Archivar no equivale a devolver el objeto ni autoriza desecharlo.
 - Mantener historial de registro, correcciones y cambios de estado. La demo ilustra esa trazabilidad; su almacenamiento local es modificable y no constituye una auditoría confiable de producción. La integración Firebase preparada conserva historial e identidad de cada operación; necesita verificaciones reales antes de operar.
 
 ## Propuesta de revisión a 90 días y destino final

@@ -135,6 +135,6 @@ El piloto tiene Hosting y reglas finales publicados, login Google con UID real y
 
 ## Consulta pública de entregas históricas
 
-`projectPublicItems` genera una proyección explícita para disponibles y registros con entrega en estado entregado o archivado. La entrega archivada se publica como Entregado, sin su estado interno de archivo. Las reglas exigen correspondencia con el registro interno y campos públicos permitidos. Las consultas recorren el catálogo completo por páginas; el conteo de portada filtra `status == disponible`.
+`projectPublicItems` genera una proyección explícita para disponibles y registros con entrega en estado entregado o archivado. La entrega archivada se publica como Entregado, sin su estado interno de archivo. Las donaciones válidas de objetos recibidos, archivados y con plazo de 90 días cumplido se publican como Donado. El estado individual se muestra únicamente en el detalle del objeto. Remisiones y archivos comunes siguen fuera del catálogo; destinatario, acta y fecha interna de donación no se copian a la ficha pública. Las reglas exigen correspondencia con el registro interno y campos públicos permitidos. Las consultas recorren el catálogo completo por páginas; el conteo de portada filtra `status == disponible`.
 
 `scripts/backfill-public-deliveries.mjs` prepara únicamente fichas públicas faltantes o desactualizadas; no modifica estados, entregas, historial ni evidencias privadas. Consultar sus condiciones y límites en [configuración Firebase](firebase-setup.md#recuperar-fichas-públicas-de-entregas-históricas).

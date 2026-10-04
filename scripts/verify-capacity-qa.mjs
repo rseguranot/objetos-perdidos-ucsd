@@ -30,7 +30,7 @@ try {
     assert.equal(ids.size, publicPage.size + next.size, 'Páginas duplicadas.')
   }
   for (const doc of publicPage.docs) {
-    assert.ok(['disponible', 'entregado'].includes(doc.data().status))
+    assert.ok(['disponible', 'entregado', 'donado'].includes(doc.data().status))
     assert.deepEqual(Object.keys(doc.data()).sort(), ['id', 'code', 'title', 'category', 'itemType', 'description', 'foundDate', 'foundLocation', 'status', 'buildingId', 'searchTerms'].sort())
     for (const field of ['custodyLocation', 'privateDetails', 'publicSearchTerms', 'delivery', 'recipient', 'proof', 'evidenceId', 'photos', 'fileId', 'history', 'disposition']) assert.equal(field in doc.data(), false)
   }

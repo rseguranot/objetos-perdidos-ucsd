@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { archiveItem, canDispose, disposeItem, filterInternalItems, needsRetentionReview, projectPublicItems, RETENTION_DAYS, retentionInfo } from '../src/domain/catalog.ts'
+import { archiveItem, canDispose, disposeItem, filterInternalItems, filterPublicItems, needsRetentionReview, projectPublicItems, RETENTION_DAYS, retentionInfo } from '../src/domain/catalog.ts'
 import { authorizeItemChange, validateAccessChange, type Session } from '../src/domain/roles.ts'
 import { parseItems, loadItems, saveItems } from '../src/data/storage.ts'
 import { SEED_ITEMS } from '../src/data/seed.ts'
@@ -70,12 +70,15 @@ test('destino archiva y añade historial; archivo previo puede completarse una �
   assert.throws(() => disposeItem(disposed, destination, actor, '2024-04-10'), /ya fue registrado/)
 })
 
-test('proyección pública no revela seguimiento ni constancias y excluye destinos', () => {
+test('proyección pública permite donados sin revelar destinatario ni constancias', () => {
   const original = item()
   const projected = projectPublicItems([original])[0]
   assert.ok(projected)
   for (const key of ['disposition', 'delivery', 'receivedDate', 'privateDetails', 'history', 'custodyLocation']) assert.equal(Object.hasOwn(projected, key), false)
-  assert.equal(projectPublicItems([disposeItem(original, destination, actor, '2024-04-09')]).length, 0)
+  const donated = projectPublicItems([disposeItem(original, destination, actor, '2024-04-09')])[0]
+  assert.equal(donated.status, 'donado')
+  assert.deepEqual(Object.keys(donated).sort(), Object.keys(projected).sort())
+  for (const key of ['disposition', 'recipient', 'reference', 'photos', 'evidenceId']) assert.equal(Object.hasOwn(donated, key), false)
   assert.equal(projectPublicItems([{ ...original, disposition: disposeItem(original, destination, actor, '2024-04-09').disposition }]).length, 0)
 })
 
@@ -148,4 +151,26 @@ test('persistencia admite registros anteriores intactos y rechaza destinos incoh
     if (savedDescriptor) Object.defineProperty(globalThis, 'localStorage', savedDescriptor)
     else Reflect.deleteProperty(globalThis, 'localStorage')
   }
+})
+
+
+test('public donations require archival, receipt, eligible category and a completed 90-day deadline', () => {
+  const original = item()
+  const donated = disposeItem(original, destination, actor, '2024-04-09')
+  // Reaching the deadline does not imply a donation; a pending available record stays available.
+  assert.equal(projectPublicItems([original])[0]?.status, 'disponible')
+  assert.equal(projectPublicItems([archiveItem(original, actor)]).length, 0)
+  assert.equal(projectPublicItems([donated])[0]?.status, 'donado')
+  const publicFilters = { query: donated.code, category: '', location: '', from: '', to: '' }
+  assert.equal(filterPublicItems([donated], publicFilters)[0]?.id, donated.id)
+  assert.equal(filterPublicItems([donated], { ...publicFilters, query: destination.recipient.trim() }).length, 0)
+  assert.equal(filterPublicItems([donated], { ...publicFilters, query: destination.reference.trim() }).length, 0)
+  assert.equal(projectPublicItems([{ ...donated, status: 'borrador' }]).length, 0)
+  assert.equal(projectPublicItems([{ ...donated, received: false }]).length, 0)
+  assert.equal(projectPublicItems([{ ...donated, category: 'dinero' }]).length, 0)
+  assert.equal(projectPublicItems([{ ...donated, category: 'documentos' }]).length, 0)
+  assert.equal(projectPublicItems([{ ...donated, disposition: { ...donated.disposition!, kind: 'remision_documentos' } }]).length, 0)
+  assert.equal(projectPublicItems([{ ...donated, disposition: { ...donated.disposition!, completedAt: '2024-01-02T12:00:00.000Z' } }]).length, 0)
+  assert.equal(projectPublicItems([{ ...donated, disposition: { ...donated.disposition!, completedAt: 'invalid' } }]).length, 0)
+  assert.equal(projectPublicItems([{ ...donated, disposition: { ...donated.disposition!, reference: '' } }]).length, 0)
 })

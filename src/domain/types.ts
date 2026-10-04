@@ -55,7 +55,7 @@ export interface LostItem {
 }
 
 export type ItemDraft = Omit<LostItem, 'id' | 'code' | 'status' | 'history' | 'delivery' | 'disposition' | 'createdByUid' | 'updatedByUid'>
-export type PublicItem = Pick<LostItem, 'id' | 'code' | 'title' | 'category' | 'itemType' | 'description' | 'foundDate' | 'foundLocation'> & { status: 'disponible' | 'entregado' }
+export type PublicItem = Pick<LostItem, 'id' | 'code' | 'title' | 'category' | 'itemType' | 'description' | 'foundDate' | 'foundLocation'> & { status: 'disponible' | 'entregado' | 'donado' }
 
 export interface CatalogFilters {
   query: string

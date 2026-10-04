@@ -169,24 +169,30 @@ service cloud.firestore {
       // Map equality enforces both the exact public fields and their matching values.
       return p == {'id': d.id, 'code': d.code, 'title': d.title, 'category': d.category,
           'itemType': d.itemType, 'description': d.description, 'foundDate': d.foundDate,
-          'foundLocation': d.foundLocation, 'status': (d.status == 'disponible' ? 'disponible' : 'entregado'),
+          'foundLocation': d.foundLocation, 'status': (d.status == 'disponible' ? 'disponible' : ('delivery' in d ? 'entregado' : 'donado')),
           'buildingId': d.buildingId, 'searchTerms': d.publicSearchTerms};
     }
     function publicMatches(p, d) {
-      return projectionMatches(p, d) && !('disposition' in d)
-        && ((d.status == 'disponible' && !('delivery' in d)) || (d.status in ['entregado', 'archivado'] && 'delivery' in d))
+      return projectionMatches(p, d)
+        && ((!('disposition' in d) && ((d.status == 'disponible' && !('delivery' in d)) || (d.status in ['entregado', 'archivado'] && 'delivery' in d))) || publicDonation(d))
         && d.received == true
         && validDate(d.receivedDate) && d.receivedDate >= d.foundDate
         && text(d.custodyLocation, 300);
     }
+    function publicDonation(d) {
+      return d.status == 'archivado' && !('delivery' in d) && 'disposition' in d
+        && !(d.category in ['documentos', 'dinero']) && d.disposition.kind == 'donacion'
+        && dispositionValid(d) && validDate(d.receivedDate)
+        && d.disposition.completedAt >= dispositionDeadline(d.receivedDate);
+    }
     function publiclyListed(d) {
-      return !('disposition' in d) && ((d.status == 'disponible' && !('delivery' in d))
-        || (d.status in ['entregado', 'archivado'] && 'delivery' in d));
+      return (!('disposition' in d) && ((d.status == 'disponible' && !('delivery' in d))
+        || (d.status in ['entregado', 'archivado'] && 'delivery' in d))) || publicDonation(d);
     }
     // Called only after itemValid: receipt, dates and custody have already been checked.
     function publicationCoherent(d, itemId) {
       let publicPath = /databases/$(database)/documents/publicItems/$(itemId);
-      return (!('disposition' in d) && ((d.status == 'disponible' && !('delivery' in d)) || (d.status in ['entregado', 'archivado'] && 'delivery' in d)))
+      return ((!('disposition' in d) && ((d.status == 'disponible' && !('delivery' in d)) || (d.status in ['entregado', 'archivado'] && 'delivery' in d))) || publicDonation(d))
         ? existsAfter(publicPath) && projectionMatches(getAfter(publicPath).data, d)
         : !existsAfter(publicPath);
     }
@@ -252,6 +258,17 @@ service cloud.firestore {
       // Only the photo service commits new handovers through IAM.
       return false;
     }
+    function archiveOpenAllowed(before, after, itemId, role) {
+      // An already validated open record is archived without changing its content.
+      return role in ['developer', 'admin', 'decanato']
+        && before.status in ['borrador', 'disponible'] && after.status == 'archivado'
+        && !('delivery' in before) && !('disposition' in before)
+        && !('delivery' in after) && !('disposition' in after)
+        && after.diff(before).affectedKeys().hasOnly(['status', 'history', 'updatedByUid', 'updatedAt'])
+        && after.updatedByUid == request.auth.uid && after.updatedAt == request.time
+        && historyAppended(before, after) && after.history.size() <= 1000 && lastEventValid(after)
+        && !existsAfter(/databases/$(database)/documents/publicItems/$(itemId));
+    }
     function archiveDeliveredAllowed(before, after, itemId, role) {
       // The delivered record was validated at handover. Archiving changes only
       // its state and appends an audit event; evidence remains immutable.
@@ -266,6 +283,7 @@ service cloud.firestore {
       // The source record was validated on its previous write. A final destination
       // changes only its disposition, private search index, state and audit event.
       let v = after.disposition;
+      let publicPath = /databases/$(database)/documents/publicItems/$(itemId);
       return role in ['developer', 'admin', 'decanato']
         && before.status in ['borrador', 'disponible', 'archivado']
         && before.received == true && !('delivery' in before) && !('disposition' in before)
@@ -283,33 +301,43 @@ service cloud.firestore {
         && after.searchTerms is list && after.searchTerms.size() <= 500
         && after.dispositionDate is string
         && after.dispositionDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
-        && !existsAfter(/databases/$(database)/documents/publicItems/$(itemId));
+        // Donation eligibility and the deadline were checked above; avoid validating them twice.
+        && (v.kind == 'donacion'
+          ? existsAfter(publicPath) && projectionMatches(getAfter(publicPath).data, after)
+          : !existsAfter(publicPath));
+    }
+    function generalItemUpdateAllowed(before, after, itemId, role) {
+      return (itemValid(after, itemId)
+        && after.createdByUid == before.createdByUid && after.code == before.code
+        && historyAppended(before, after)
+        // Final disposition already enforces archival, no delivery and the permitted prior states.
+        && ('disposition' in after
+          ? (role in ['developer', 'admin', 'decanato'] && dispositionTransition(before, after)
+            && publicationCoherent(after, itemId))
+          : (deliveryTransition(before, after) && dispositionTransition(before, after)
+            && ((role in ['developer', 'admin', 'decanato'] && validTransition(before, after))
+              || (role == 'registro' && before.createdByUid == request.auth.uid
+                && registrationDraft(before) && registrationDraft(after)))
+            && publicationCoherent(after, itemId))));
     }
     function itemUpdateAllowed(itemId) {
       let role = staffRole();
       let before = resource.data;
       let after = request.resource.data;
       return role in ['developer', 'admin', 'decanato', 'registro']
-        && (before.status == 'borrador' && after.status == 'disponible'
+        && (before.status == after.status && !('disposition' in after)
+          ? generalItemUpdateAllowed(before, after, itemId, role)
+          : before.status == 'borrador' && after.status == 'disponible'
           ? publishReceivedAllowed(before, after, itemId, role)
           : before.status == 'disponible' && after.status == 'entregado'
           ? deliveryUpdateAllowed(before, after, itemId, role)
           : before.status == 'entregado' && after.status == 'archivado'
           ? archiveDeliveredAllowed(before, after, itemId, role)
+          : before.status in ['borrador', 'disponible'] && after.status == 'archivado' && !('disposition' in after) && !('delivery' in after)
+          ? archiveOpenAllowed(before, after, itemId, role)
           : 'disposition' in after && !('disposition' in before)
           ? dispositionUpdateAllowed(before, after, itemId, role)
-          : (itemValid(after, itemId)
-        && after.createdByUid == before.createdByUid && after.code == before.code
-        && historyAppended(before, after)
-        // Final disposition already enforces archival, no delivery and the permitted prior states.
-        && ('disposition' in after
-          ? (role in ['developer', 'admin', 'decanato'] && dispositionTransition(before, after)
-            && !existsAfter(/databases/$(database)/documents/publicItems/$(itemId)))
-          : (deliveryTransition(before, after) && dispositionTransition(before, after)
-            && ((role in ['developer', 'admin', 'decanato'] && validTransition(before, after))
-              || (role == 'registro' && before.createdByUid == request.auth.uid
-                && registrationDraft(before) && registrationDraft(after)))
-            && publicationCoherent(after, itemId)))));
+          : generalItemUpdateAllowed(before, after, itemId, role));
     }
     function publicDeleteAllowed(itemId) {
       let privatePath = /databases/$(database)/documents/privateItems/$(itemId);

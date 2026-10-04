@@ -17,6 +17,7 @@ test('los 50 ejemplos cubren estados, destinos y todas las categorías públicas
   const publicItems = projectPublicItems(mixed)
   assert.equal(publicItems.filter(item => item.status === 'disponible').length, 30)
   assert.equal(publicItems.filter(item => item.status === 'entregado').length, mixed.filter(item => item.delivery).length)
+  assert.equal(publicItems.filter(item => item.status === 'donado').length, 3)
   assert.deepEqual([...new Set(publicItems.map(item => item.category))].sort(), Object.keys(CATEGORY_LABELS).sort())
   assert.ok(publicItems.every(item => !('delivery' in item) && !('disposition' in item) && !('history' in item)))
   mixed.forEach((item, i) => assert.deepEqual(item.history.slice(0, source[i].history.length), source[i].history))

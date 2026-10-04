@@ -128,6 +128,8 @@ try {
     console.log('Entrega externa histórica remota aprobada.')
     assert.equal((await getDocFromServer(doc(db, 'publicItems', item.id))).data()?.status, 'entregado')
   }
+  await denied(() => persist({ ...archiveItem(item, accounts.decanato.email), privateDetails: 'Cambio reservado no permitido al archivar' }, true), 'Archivar no modifica características reservadas')
+  await denied(() => persist({ ...archiveItem(item, accounts.decanato.email), title: 'Cambio de título no permitido al archivar' }, true), 'Archivar no modifica la ficha del objeto')
   item = archiveItem(item, accounts.decanato.email)
   await persist(item, process.env.UCSD_EVIDENCE_ENABLED === 'true')
   console.log('Archivo remoto aprobado.')
@@ -168,7 +170,16 @@ try {
     const stored = (await getDocFromServer(doc(db, 'privateItems', aged.id))).data()
     assert.equal(typeof stored.disposition.completedAt.toMillis(), 'number')
     assert.equal(decodeFirestoreRecord(stored).disposition.kind, kind)
-    assert.equal((await getDocFromServer(doc(db, 'publicItems', aged.id))).exists(), false)
+    const destinationPublic = (await getDocFromServer(doc(db, 'publicItems', aged.id))).data()
+    if (kind === 'donacion') {
+      const projected = projectPublicItems([disposed])[0]
+      assert.equal(projected.status, 'donado')
+      assert.deepEqual(destinationPublic, { ...projected, ...buildPublicIndex(projected) })
+      for (const extra of [{ recipient: disposed.disposition.recipient }, { reference: disposed.disposition.reference }, { disposition: disposed.disposition }, { evidenceId: 'evidencia-inventada-para-qa-0001' }]) {
+        await denied(() => setDoc(doc(db, 'publicItems', aged.id), { ...destinationPublic, ...extra }), `Donado público no expone ${Object.keys(extra)[0]}`)
+      }
+      await denied(() => deleteDoc(doc(db, 'publicItems', aged.id)), 'Una donación completada conserva su ficha pública')
+    } else assert.equal(destinationPublic, undefined)
     await denied(() => persist(disposed, false), 'Un destino final completado no se puede reescribir')
     console.log(`Destino final remoto aprobado: ${kind}.`)
   }
