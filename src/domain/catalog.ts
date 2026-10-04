@@ -183,16 +183,16 @@ function withHistory(item: LostItem, action: string, actor: string): LostItem {
 }
 
 export function projectPublicItems(items: LostItem[]): PublicItem[] {
-  return items.filter(item => item.status === 'disponible' && !item.delivery && !item.disposition && item.received && item.custodyLocation.trim() && isDate(item.foundDate) && isDate(item.receivedDate) && item.receivedDate >= item.foundDate).map(item => ({
+  return items.filter(item => !item.disposition && ((item.status === 'disponible' && !item.delivery) || (['entregado', 'archivado'].includes(item.status) && Boolean(item.delivery))) && item.received && item.custodyLocation.trim() && isDate(item.foundDate) && isDate(item.receivedDate) && item.receivedDate >= item.foundDate).map(item => ({
     id: item.id, code: item.code, title: item.title, category: item.category, itemType: item.itemType,
-    description: item.description, foundDate: item.foundDate, foundLocation: item.foundLocation, status: 'disponible',
+    description: item.description, foundDate: item.foundDate, foundLocation: item.foundLocation, status: item.delivery ? 'entregado' : 'disponible',
   }))
 }
 
 export function filterPublicCatalog(items: PublicItem[], filters: CatalogFilters): PublicItem[] {
   const words = normalize(filters.query).split(/\s+/).filter(Boolean)
   return items.filter(item => {
-    if (item.status !== 'disponible' || !isDate(item.foundDate)) return false
+    if (!['disponible', 'entregado'].includes(item.status) || !isDate(item.foundDate)) return false
     if (filters.category && item.category !== filters.category) return false
     if (filters.itemType && item.itemType !== filters.itemType) return false
     if (filters.location && !matchesBuilding(item.foundLocation, filters.location) && item.foundLocation !== filters.location) return false
@@ -203,7 +203,7 @@ export function filterPublicCatalog(items: PublicItem[], filters: CatalogFilters
   }).sort((a, b) => b.foundDate.localeCompare(a.foundDate) || b.code.localeCompare(a.code)).map(item => ({
     id: item.id, code: item.code, title: item.title, category: item.category, itemType: item.itemType,
     description: item.description, foundDate: item.foundDate, foundLocation: item.foundLocation,
-    status: 'disponible',
+    status: item.status,
   }))
 }
 

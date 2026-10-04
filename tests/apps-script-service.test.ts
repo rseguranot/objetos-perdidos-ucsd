@@ -152,14 +152,19 @@ function deliveryHarness() {
   const payload = { itemId: 'item', operationId: 'operation', expectedHistoryId: 'history', delivery: { recipient: 'Person', proof: 'Description', identityType: 'carnet_estudiante' }, photos: [image()] }
   return { call, context, payload, documents, reads, commits, created: () => created, revoke: () => { revoke = true }, failCommit: (value: boolean) => { failCommit = value } }
 }
-test('Apps Script commits handover, evidence and removal together after transactional access and version reads', () => {
+test('Apps Script commits handover, private evidence and delivered public projection together after transactional access and version reads', () => {
   const h = deliveryHarness()
   const result = h.call('deliver_', config, identity, token(), h.payload) as { evidenceId: string }
   assert.equal(h.created(), 1)
   assert.ok(h.reads.includes('access/' + identity.email)); assert.ok(h.reads.includes('privateItems/item')); assert.ok(h.reads.includes('evidenceOperations/' + result.evidenceId))
   const last = h.commits.at(-1)!
   assert.equal(last.transaction, 'transaction1'); assert.equal(last.writes.length, 4)
-  assert.ok(last.writes.some(write => write.delete === 'projects/pilot/databases/(default)/documents/publicItems/item'))
+  const publicItem = h.documents.get('publicItems/item')!.value
+  assert.equal(publicItem.status, 'entregado')
+  assert.deepEqual(Object.keys(publicItem).sort(), ['id', 'code', 'title', 'category', 'itemType', 'description', 'foundDate', 'foundLocation', 'status', 'buildingId', 'searchTerms'].sort())
+  assert.ok(!JSON.stringify(publicItem).includes('secret'))
+  assert.ok(!JSON.stringify(publicItem).includes('Person'))
+  assert.ok(!JSON.stringify(publicItem).includes(result.evidenceId))
   assert.equal(h.documents.get('privateItems/item')!.value.status, 'entregado')
   assert.equal(h.documents.get('evidenceOperations/' + result.evidenceId)!.value.state, 'completed')
   assert.equal(h.documents.get('privateItems/item')!.value.privateDetails, 'secret')

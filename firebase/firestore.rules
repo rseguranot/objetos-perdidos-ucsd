@@ -169,18 +169,24 @@ service cloud.firestore {
       // Map equality enforces both the exact public fields and their matching values.
       return p == {'id': d.id, 'code': d.code, 'title': d.title, 'category': d.category,
           'itemType': d.itemType, 'description': d.description, 'foundDate': d.foundDate,
-          'foundLocation': d.foundLocation, 'status': 'disponible',
+          'foundLocation': d.foundLocation, 'status': (d.status == 'disponible' ? 'disponible' : 'entregado'),
           'buildingId': d.buildingId, 'searchTerms': d.publicSearchTerms};
     }
     function publicMatches(p, d) {
-      return projectionMatches(p, d) && d.status == 'disponible' && d.received == true
+      return projectionMatches(p, d) && !('disposition' in d)
+        && ((d.status == 'disponible' && !('delivery' in d)) || (d.status in ['entregado', 'archivado'] && 'delivery' in d))
+        && d.received == true
         && validDate(d.receivedDate) && d.receivedDate >= d.foundDate
         && text(d.custodyLocation, 300);
+    }
+    function publiclyListed(d) {
+      return !('disposition' in d) && ((d.status == 'disponible' && !('delivery' in d))
+        || (d.status in ['entregado', 'archivado'] && 'delivery' in d));
     }
     // Called only after itemValid: receipt, dates and custody have already been checked.
     function publicationCoherent(d, itemId) {
       let publicPath = /databases/$(database)/documents/publicItems/$(itemId);
-      return d.status == 'disponible'
+      return (!('disposition' in d) && ((d.status == 'disponible' && !('delivery' in d)) || (d.status in ['entregado', 'archivado'] && 'delivery' in d)))
         ? existsAfter(publicPath) && projectionMatches(getAfter(publicPath).data, d)
         : !existsAfter(publicPath);
     }
@@ -229,6 +235,19 @@ service cloud.firestore {
         && (role in ['developer', 'admin', 'decanato'] || registrationDraft(after))
         && publicationCoherent(after, itemId);
     }
+    function publishReceivedAllowed(before, after, itemId, role) {
+      // Receipt was validated on the prior write. Publishing changes only status
+      // and audit metadata; all public/private fields and search indexes are immutable.
+      return role in ['developer', 'admin', 'decanato']
+        && before.status == 'borrador' && after.status == 'disponible'
+        && before.received == true && !('delivery' in before) && !('disposition' in before)
+        && validDate(before.receivedDate) && before.receivedDate >= before.foundDate
+        && text(before.custodyLocation, 300)
+        && after.diff(before).affectedKeys().hasOnly(['status', 'history', 'updatedByUid', 'updatedAt'])
+        && after.updatedByUid == request.auth.uid && after.updatedAt == request.time
+        && historyAppended(before, after) && after.history.size() <= 1000 && lastEventValid(after)
+        && publicationCoherent(after, itemId);
+    }
     function deliveryUpdateAllowed(before, after, itemId, role) {
       // Only the photo service commits new handovers through IAM.
       return false;
@@ -241,7 +260,7 @@ service cloud.firestore {
         && after.diff(before).affectedKeys().hasOnly(['status', 'history', 'updatedByUid', 'updatedAt'])
         && after.updatedByUid == request.auth.uid && after.updatedAt == request.time
         && historyAppended(before, after) && after.history.size() <= 1000 && lastEventValid(after)
-        && !existsAfter(/databases/$(database)/documents/publicItems/$(itemId));
+        && publicationCoherent(after, itemId);
     }
     function dispositionUpdateAllowed(before, after, itemId, role) {
       // The source record was validated on its previous write. A final destination
@@ -271,7 +290,9 @@ service cloud.firestore {
       let before = resource.data;
       let after = request.resource.data;
       return role in ['developer', 'admin', 'decanato', 'registro']
-        && (before.status == 'disponible' && after.status == 'entregado'
+        && (before.status == 'borrador' && after.status == 'disponible'
+          ? publishReceivedAllowed(before, after, itemId, role)
+          : before.status == 'disponible' && after.status == 'entregado'
           ? deliveryUpdateAllowed(before, after, itemId, role)
           : before.status == 'entregado' && after.status == 'archivado'
           ? archiveDeliveredAllowed(before, after, itemId, role)
@@ -300,7 +321,7 @@ service cloud.firestore {
       return request.auth != null && exists(privatePath) && existsAfter(privatePath)
         && before.get('updatedAt', null) != after.updatedAt
         && after.updatedByUid == request.auth.uid && after.updatedAt == request.time
-        && after.status in ['entregado', 'archivado'];
+        && after.status in ['entregado', 'archivado'] && !publiclyListed(after);
     }
     match /access/{targetEmail} {
       // No auto-enrollment: a denied user can only inspect their own document.

@@ -45,7 +45,7 @@ La demo guarda el registro completo en el navegador, aunque muestre esa proyecci
 
 ## Operaciones y consistencia
 
-El recorrido habitual es `borrador → disponible → entregado → archivado`. Crear un hallazgo siempre produce un borrador. Confirmar recepción exige fecha y ubicación de custodia, incluso antes de publicar. Publicar exige esa recepción confirmada. Entregar retira el objeto del catálogo, conserva prueba de propiedad, identificación verificada y referencia de evidencia externa. Archivar una entrega solo cambia su estado y añade un evento; no permite alterar sus datos ni su entrega anterior.
+El recorrido habitual es `borrador → disponible → entregado → archivado`. Crear un hallazgo siempre produce un borrador. Confirmar recepción exige fecha y ubicación de custodia, incluso antes de publicar. Publicar exige esa recepción confirmada. Entregar cambia la ficha pública a Entregado y conserva internamente prueba de propiedad, identificación verificada y constancia privada de fotografías. Las entregas históricas mantienen sus referencias externas. Un archivo posterior conserva la consulta pública de esa entrega. Archivar una entrega solo cambia su estado y añade un evento; no permite alterar sus datos ni su entrega anterior.
 
 Cada operación conserva los eventos anteriores. Un destino final registrado es inmutable desde la app. No se eliminan registros desde la interfaz: se archivan. Las escrituras de la aplicación procesan un objeto por operación.
 
@@ -79,7 +79,9 @@ Google por redirect se permite solo con `authDomain === window.location.host`. E
 
 ## Entregas, evidencia y destinos
 
-Una nueva entrega requiere receptor, comprobación de propiedad, tipo de identificación presentada y referencia de la fotografía custodiada externamente. El operador confirma la revisión presencial y la evidencia. No se pide el número del documento ni se toma, carga o almacena una fotografía en esta aplicación. La referencia es interna; debe identificar una evidencia con acceso restringido, no convertirla en un enlace público.
+Una nueva entrega requiere receptor, comprobación de propiedad, tipo de identificación presentada y una a tres fotografías. La app convierte y limpia las imágenes antes de enviarlas al servicio Apps Script; Drive institucional las guarda en una carpeta privada. Solo se conserva el tipo de documento presentado, sin fotografiarlo. Las imágenes y sus identificadores no forman parte del catálogo público.
+
+Gestión muestra Ver fotos en el historial. Registro mantiene Consultar entregas en un diálogo de la misma pantalla, con constancias de 25 en 25 sin datos de custodia ni características reservadas. Los visores y vistas previas usan estado temporal y se desmontan al cerrar o cambiar la sesión.
 
 Las entregas antiguas pueden carecer de los dos campos nuevos; se conservan como registros históricos sin inventar identificación ni fotografía. Consultar el [protocolo](protocolo-propuesto.md) para las responsabilidades y el [análisis de alojamiento y evidencia](alojamiento-y-evidencia.md) para costes y alternativas.
 
@@ -130,3 +132,9 @@ La evaluación de publicación/entrega alcanzaba el límite de 1000 expresiones 
 Ejecutar `npm ci`, `npm run test`, `npm run lint`, `npm run build`, `npm run build:firebase` y `npm run build:pruebas`; las compilaciones incluyen tipos. Una revisión anterior aprobó 57 pruebas de Node, tipos, lint y las tres compilaciones; otra verificó después estados ficticios en el piloto. Esos resultados no cubren todavía la nueva paginación y agregaciones. Las pruebas locales verifican lógica y permisos simulados; el SDK QA anterior verificó operaciones reales de su proyecto separado. La evidencia y los casos exactos se mantienen en [Verificación](verificacion.md).
 
 El piloto tiene Hosting y reglas finales publicados, login Google con UID real y acceso reservado activo comprobado. QA aprobó creación propia, recepción, publicación, lectura pública sin información privada, entrega identificada, retirada y archivo con historial, además de revocación con sesión abierta, restauración y las denegaciones documentadas. Donación y remisión remotas también aprobaron; los 14 cuadernos y la mochila de diagnóstico quedaron archivados. El catálogo QA mostró 28 públicos al cierre. Antes de introducir datos reales, faltan la evaluación de acceso institucional con contraseña y los acuerdos UCSD sobre responsables, protocolo y custodia externa. El circuito QA no demuestra automáticamente ese recorrido con la identidad institucional del piloto ni casos no enumerados.
+
+## Consulta pública de entregas históricas
+
+`projectPublicItems` genera una proyección explícita para disponibles y registros con entrega en estado entregado o archivado. La entrega archivada se publica como Entregado, sin su estado interno de archivo. Las reglas exigen correspondencia con el registro interno y campos públicos permitidos. Las consultas recorren el catálogo completo por páginas; el conteo de portada filtra `status == disponible`.
+
+`scripts/backfill-public-deliveries.mjs` prepara únicamente fichas públicas faltantes o desactualizadas; no modifica estados, entregas, historial ni evidencias privadas. Consultar sus condiciones y límites en [configuración Firebase](firebase-setup.md#recuperar-fichas-públicas-de-entregas-históricas).

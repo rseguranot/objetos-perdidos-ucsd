@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import { test } from 'node:test'
 import { staffMetricPlan, summarizeLocalMetrics } from '../src/data/metrics.ts'
 import { SEED_ITEMS } from '../src/data/seed.ts'
@@ -68,4 +69,13 @@ test('events close to New Year belong to the Santo Domingo calendar year', () =>
 test('unauthorized identities cannot request staff metrics', () => {
   assert.throws(() => staffMetricPlan({ uid: '', email: '', verified: false, role: null }, 2026), /permiso/)
   assert.throws(() => staffMetricPlan(admin, 1999), /año válido/)
+})
+
+
+test('overdue counts have an ascending index for Registro scoped to its own records', () => {
+  const indexes = JSON.parse(readFileSync(new URL('../firebase/firestore.indexes.json', import.meta.url), 'utf8')).indexes
+  const expected = ['createdByUid', 'deliveryDate', 'dispositionDate', 'received', 'status', 'receivedDate'].map(fieldPath => ({ fieldPath, order: 'ASCENDING' }))
+  assert.ok(indexes.some((index: { collectionGroup: string; queryScope: string; fields: unknown }) => index.collectionGroup === 'privateItems' && index.queryScope === 'COLLECTION' && JSON.stringify(index.fields) === JSON.stringify(expected)))
+  const plan = staffMetricPlan(registro, 2026)
+  assert.deepEqual(plan.reviewOverdue.filters[0], { field: 'createdByUid', operation: '==', value: registro.uid })
 })

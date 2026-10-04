@@ -52,7 +52,15 @@ try {
     assert.ok(raw?.title?.startsWith('Cuaderno evidencia QA '), 'Only dedicated fictitious records can be archived.')
     const item = decodeFirestoreRecord(raw)
     assert.ok(item.delivery?.evidenceId)
-    assert.equal((await getDocFromServer(doc(admin.db, 'publicItems', itemId))).exists(), false)
+    const publicProjection = projectPublicItems([item])[0]
+    assert.ok(publicProjection, 'A delivered or archived handover retains a public projection.')
+    const expectedPublic = { ...publicProjection, ...buildPublicIndex(publicProjection) }
+    assert.equal(publicProjection.status, 'entregado')
+    assert.deepEqual((await getDocFromServer(doc(admin.db, 'publicItems', itemId))).data(), expectedPublic)
+    for (const extra of [{ recipient: raw.delivery.recipient }, { evidenceId: raw.delivery.evidenceId }, { custodyLocation: raw.custodyLocation }]) {
+      await denied(() => setDoc(doc(admin.db, 'publicItems', itemId), { ...expectedPublic, ...extra }))
+    }
+    await denied(() => setDoc(doc(admin.db, 'publicItems', itemId), { ...expectedPublic, status: 'disponible' }))
     const evidence = (await getDocFromServer(doc(admin.db, 'deliveryEvidence', item.delivery.evidenceId))).data()
     assert.equal(evidence.itemId, itemId)
     assert.equal(evidence.photos.length, item.title.includes('3 fotos') ? 3 : 1)
@@ -61,6 +69,7 @@ try {
     await getDocs(query(collection(register.db, 'deliveryEvidence'), limit(25)))
     await denied(() => getDocFromServer(doc(register.db, 'privateItems', itemId)))
     await denied(() => getDocFromServer(doc(visitor.db, 'deliveryEvidence', evidence.id)))
+    assert.deepEqual((await getDocFromServer(doc(visitor.db, 'publicItems', itemId))).data(), expectedPublic)
     await denied(() => setDoc(doc(admin.db, 'deliveryEvidence', 'inventada'), { itemId }))
     const archived = item.status === 'archivado' ? item : archiveItem(item, admin.auth.currentUser.email)
     if (item.status !== 'archivado') await persist(admin.db, admin.auth, archived)
@@ -68,6 +77,10 @@ try {
     assert.equal(after.status, 'archivado')
     assert.deepEqual(after.delivery, raw.delivery)
     assert.equal(after.deliveryDate, raw.deliveryDate)
+    assert.deepEqual((await getDocFromServer(doc(visitor.db, 'publicItems', itemId))).data(), expectedPublic)
+    assert.equal('delivery' in expectedPublic, false)
+    assert.equal('evidenceId' in expectedPublic, false)
+    assert.equal('custodyLocation' in expectedPublic, false)
     console.log('Entrega, fotos, privacidad, índice y archivo remoto: aprobados.')
   }
 } finally { for (const app of apps) { await terminate(getFirestore(app)); await deleteApp(app) } }

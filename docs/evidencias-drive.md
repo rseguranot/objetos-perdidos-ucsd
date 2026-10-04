@@ -50,12 +50,12 @@ La función REST [projects.test](https://firebase.google.com/docs/reference/rule
 
 - Una a tres fotografías por entrega, una obligatoria de persona y objeto. Selector del sistema y captura móvil cuando esté disponible; sin fotografías de documentos.
 - Compresión JPEG en navegador, máximo 1 MB y lado mayor de 1.600 píxeles; validación de bytes, formato, tamaño y dimensiones también en servidor.
-- Subida por Developer, Administrador y Decanato. Sección privada de evidencias para todos los roles activos, con 25 entregas por página; Registro no obtiene acceso general a privateItems.
+- Subida por Developer, Administrador y Decanato. Visor privado desde Historial en Gestión. Registro conserva Consultar entregas dentro de Gestión, con 25 constancias por página; no obtiene acceso general a privateItems.
 - Carpetas y servicios independientes de QA y piloto, propiedad de la cuenta institucional; sin links públicos ni permisos Drive individuales para operadores.
 - Validar token con Firebase, proyecto, identidad y acceso activo en cada operación. Aplicar la excepción de identidades ficticias únicamente en QA.
 - Servicio con OAuth de propietaria, sin claves privadas descargadas; sus escrituras Firestore usan IAM y deben repetir los controles de autorización. No incorporar permisos adicionales de Owner.
 - Constancia deliveryEvidence creada exclusivamente por servicio. Denegar nuevas entregas directas del cliente cuando se active el servicio; conservar entregas históricas y su archivado.
-- Subida pendiente recuperable e idempotente por operación, objeto, operador y contenido. Commit atómico de constancia, entrega, historial y eliminación pública, condicionado por cambios concurrentes del objeto y del permiso.
+- Subida pendiente recuperable e idempotente por operación, objeto, operador y contenido. Commit atómico de constancia, entrega, historial y actualización de la ficha pública a Entregado, condicionado por cambios concurrentes del objeto y del permiso.
 - Visor servido previa autorización por evidenceId; no admitir fileId arbitrario. Sin fotografías en catálogo ni almacenamiento persistente en navegador.
 - Sin eliminación automática de evidencias vinculadas. La política para fotos reales y el traspaso institucional se acordarán antes de producción.
 
@@ -65,3 +65,9 @@ La función REST [projects.test](https://firebase.google.com/docs/reference/rule
 - https://developers.google.com/apps-script/reference/html/x-frame-options-mode
 - https://firebase.google.com/docs/firestore/use-rest-api
 - https://developers.google.com/apps-script/guides/services/quotas
+
+## Mejora de interfaz y consulta histórica — publicada el 3 de octubre de 2026
+
+La navegación independiente Evidencias se sustituye por Ver fotos en Historial. Registro tiene Consultar entregas dentro de Gestión, con el mismo acceso limitado a constancias y fotografías que antes. No se amplían sus permisos sobre los registros internos. Las imágenes seleccionadas se amplían con clic o Ver foto antes de confirmar.
+
+Las entregas permanecen consultables públicamente como Entregado, incluso si luego se archivan. Solo se publica su ficha general: la entrega, persona, fotografías, referencia de constancia y archivos Drive permanecen privados. Las frases anteriores sobre retirada del catálogo describen comprobaciones previas a este cambio. Se validaron en QA filtro «Ele» → Electrónica, limpieza de búsqueda y el visor de tres imágenes desde Historial. El piloto tiene Hosting y reglas actualizados, junto con la versión 2 del servicio Apps Script (21:38 UTC−4). Se recuperaron nueve fichas históricas con respaldo, sin escrituras privadas; una segunda simulación encontró cero cambios. UCSD-DEMO-0001 aparece públicamente como Entregado y orienta a consultar con el decanato. Firestore y las fotos siguen privados; billingEnabled continúa en false.

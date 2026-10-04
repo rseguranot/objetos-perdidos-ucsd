@@ -27,7 +27,7 @@ Mensajes desde la app: `{kind:'request', nonce, requestId, idToken, action, payl
 - `list`: `{cursor?:string|null}` → `{items:[{id,itemId,code,title,deliveredAt,photoCount}],cursor:string|null}`. 25 constancias por página; consulta 26 para detectar la siguiente. El cursor debe reenviarse sin modificar.
 - `view`: `{evidenceId}` → `{photos:[{base64,mimeType,size,width,height}]}`. Los IDs de Drive no se aceptan desde la app y no salen de esta respuesta.
 
-Todos los roles activos pueden listar y ver evidencias. Solo Developer, Administrador y Decanato pueden entregar. Las constancias no incluyen receptor, prueba de propiedad, custodia ni características privadas.
+Todos los roles activos pueden listar y ver evidencias. En la interfaz, Ver fotos se abre desde Historial en Gestión. Registro dispone de Consultar entregas dentro de Gestión, con listado de 25 y visor; este permiso no amplía la lectura de privateItems. Solo Developer, Administrador y Decanato pueden entregar. Las constancias no incluyen receptor, prueba de propiedad, custodia ni características privadas.
 
 ## Entrega, reintentos y recuperación
 
@@ -35,7 +35,7 @@ Cada operación usa SHA-256 de UID+operationId. La huella incluye objeto, versi�
 
 `evidenceOperations` conserva pendientes y archivos creados. Los nombres deterministas permiten recuperar un archivo cuyo ID no llegó a guardarse por una interrupción. Un bloqueo de script serializa entregas y mantenimiento, acorde al volumen previsto. Nunca se confirma entrega antes de guardar todas las fotos.
 
-Después de subir, el servicio revalida la identidad y usa una transacción Firestore que lee acceso, objeto y operación. El commit incluye objeto entregado, historial, fecha local para métricas, eliminación pública, constancia y operación completada. La lectura transaccional de acceso protege frente a revocación concurrente; las precondiciones updateTime y expectedHistoryId protegen cambios del objeto.
+Después de subir, el servicio revalida la identidad y usa una transacción Firestore que lee acceso, objeto y operación. El commit incluye objeto entregado, historial, fecha local para métricas, actualización de la ficha pública a Entregado mediante campos permitidos, constancia y operación completada. La lectura transaccional de acceso protege frente a revocación concurrente; las precondiciones updateTime y expectedHistoryId protegen cambios del objeto.
 
 No hay una transacción conjunta Drive/Firestore: si falla Firestore pueden quedar archivos pendientes privados. `cleanupPending_` es mantenimiento manual exclusivo del editor, no invocable con `google.script.run`: procesa hasta 25 operaciones pendientes/abandonadas de más de 7 días. Antes de mandar fotos a la papelera verifica que no exista constancia ni entrega vinculada. Conserva la operación como limpiada, no borra evidencias completadas. No instalar un trigger automático sin acordarlo.
 

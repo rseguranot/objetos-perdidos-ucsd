@@ -30,8 +30,9 @@ try {
     assert.equal(ids.size, publicPage.size + next.size, 'Páginas duplicadas.')
   }
   for (const doc of publicPage.docs) {
-    assert.equal(doc.data().status, 'disponible')
-    assert.ok(!('custodyLocation' in doc.data()) && !('privateDetails' in doc.data()) && !('publicSearchTerms' in doc.data()))
+    assert.ok(['disponible', 'entregado'].includes(doc.data().status))
+    assert.deepEqual(Object.keys(doc.data()).sort(), ['id', 'code', 'title', 'category', 'itemType', 'description', 'foundDate', 'foundLocation', 'status', 'buildingId', 'searchTerms'].sort())
+    for (const field of ['custodyLocation', 'privateDetails', 'publicSearchTerms', 'delivery', 'recipient', 'proof', 'evidenceId', 'photos', 'fileId', 'history', 'disposition']) assert.equal(field in doc.data(), false)
   }
   const sample = publicPage.docs[0]?.data()
   if (sample) {
@@ -55,7 +56,18 @@ try {
   assert.equal(full.length, privateTotal, 'Esta prueba de referencia requiere menos de 500 registros QA.')
   const expected = summarizeLocalMetrics(full, session, 2026)
   assert.deepEqual(measured, expected, 'Las métricas remotas difieren del conjunto de referencia completo.')
-  console.log(JSON.stringify({ project: projectId, publicTotal, privateTotal, firstPublicPage: publicPage.size, delivered2026: delivered, donated2026: donated, reportMs: elapsedMs, metricsMatch: true }))
+  const registro = credentials.accounts.find(account => account.role === 'registro')
+  assert.ok(registro)
+  await signOut(auth)
+  const registroUser = (await signInWithEmailAndPassword(auth, registro.email, registro.password)).user
+  assert.equal(registroUser.uid, registro.uid)
+  const registroSession = { uid: registroUser.uid, email: registro.email, verified: true, role: 'registro' }
+  const registroStarted = performance.now()
+  const registroMetrics = await loadStaffMetrics(db, registroSession, 2026)
+  const registroElapsedMs = Math.round(performance.now() - registroStarted)
+  const ownedReference = summarizeLocalMetrics(full, registroSession, 2026)
+  assert.deepEqual(registroMetrics, ownedReference, 'Registro debe contar únicamente sus objetos y coincidir con la referencia completa.')
+  console.log(JSON.stringify({ project: projectId, publicTotal, privateTotal, firstPublicPage: publicPage.size, delivered2026: delivered, donated2026: donated, reportMs: elapsedMs, metricsMatch: true, registroReportMs: registroElapsedMs, registroOwnedRecords: full.filter(item => item.createdByUid === registro.uid).length, registroMetricsMatch: true }))
 } finally {
   await signOut(auth).catch(() => {})
   await terminate(db)

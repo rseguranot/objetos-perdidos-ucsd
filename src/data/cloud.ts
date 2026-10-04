@@ -74,6 +74,6 @@ export async function writeItem(session: Session, previous: LostItem | undefined
     const publicReference = doc(database(), 'publicItems', record.id)
     const projection = projectPublicItems([record])[0]
     if (projection) transaction.set(publicReference, { ...projection, ...buildPublicIndex(projection) })
-    else if (previous?.status === 'disponible') transaction.delete(publicReference)
+    else if (previous && projectPublicItems([previous]).length) transaction.delete(publicReference)
   })
 }

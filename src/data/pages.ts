@@ -21,8 +21,8 @@ function matchingTerms(raw: Record<string, unknown>, terms: string[]): boolean {
 function publicRecord(snapshot: QueryDocumentSnapshot): PublicItem {
   const value = snapshot.data()
   const classification = typeof value.category === 'string' && typeof value.title === 'string' ? normalizeClassification(value.category, value.title, value.itemType) : null
-  if (!classification || snapshot.id !== value.id || value.status !== 'disponible' || !['id', 'code', 'title', 'description', 'foundDate', 'foundLocation'].every(key => typeof value[key] === 'string')) throw new Error('El catálogo remoto contiene un registro inválido.')
-  return { id: value.id, code: value.code, title: value.title, ...classification, description: value.description, foundDate: value.foundDate, foundLocation: value.foundLocation, status: 'disponible' }
+  if (!classification || snapshot.id !== value.id || !['disponible', 'entregado'].includes(value.status) || !['id', 'code', 'title', 'description', 'foundDate', 'foundLocation'].every(key => typeof value[key] === 'string')) throw new Error('El catálogo remoto contiene un registro inválido.')
+  return { id: value.id, code: value.code, title: value.title, ...classification, description: value.description, foundDate: value.foundDate, foundLocation: value.foundLocation, status: value.status }
 }
 function privateRecord(snapshot: QueryDocumentSnapshot): LostItem {
   const value = decodeFirestoreRecord(snapshot.data())

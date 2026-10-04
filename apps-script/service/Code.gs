@@ -196,12 +196,15 @@ function deliver_(c, identity, token, payload) {
     fields.history = encode_(item.value.history.concat([{ id: operation, at: at, actor: identity.email, action: 'Objeto entregado; propiedad e identidad comprobadas y fotografías registradas' }]));
     var evidence = { id: operation, itemId: p.itemId, code: item.value.code, title: item.value.title, deliveredAt: at, operatorUid: identity.uid, photos: photos, operationId: p.operationId };
     op.value.state = 'completed'; op.value.completedAt = at;
-    commit_(c, [write_(c, 'privateItems/' + p.itemId, fields, { updateTime: item.updateTime }, true), { delete: name_(c, 'publicItems/' + p.itemId) }, write_(c, 'deliveryEvidence/' + operation, encodeMap_(evidence), { exists: false }), write_(c, path, encodeMap_(op.value), { updateTime: op.updateTime })], tx);
+    commit_(c, [write_(c, 'privateItems/' + p.itemId, fields, { updateTime: item.updateTime }, true), write_(c, 'publicItems/' + p.itemId, encodeMap_(publicItemProjection_(item.value))), write_(c, 'deliveryEvidence/' + operation, encodeMap_(evidence), { exists: false }), write_(c, path, encodeMap_(op.value), { updateTime: op.updateTime })], tx);
     return { evidenceId: operation, itemId: p.itemId };
   } finally {
     // A successful commit closes the transaction; rollback of a closed one is harmless.
     try { request_(base_(c) + ':rollback', 'post', { transaction: tx }, true, c); } catch (_) {}
   }
+}
+function publicItemProjection_(v) {
+  return { id: v.id, code: v.code, title: v.title, category: v.category, itemType: v.itemType, description: v.description, foundDate: v.foundDate, foundLocation: v.foundLocation, status: 'entregado', buildingId: v.buildingId, searchTerms: v.publicSearchTerms };
 }
 function projection_(v) { return { id: v.id, itemId: v.itemId, code: v.code, title: v.title, deliveredAt: v.deliveredAt, photoCount: v.photos.length }; }
 function list_(c, payload) {

@@ -41,19 +41,19 @@ Para el retiro, el estudiante presenta un documento de identidad o su carné est
 2. Revisar presencialmente documento de identidad o carné de estudiante y consignar su tipo.
 3. Explicar al receptor el uso, responsables y conservación de la fotografía de evidencia según lo que apruebe UCSD.
 4. Documentar la devolución con una fotografía de evidencia de la entrega junto al objeto; evitar incluir el documento identificativo, su número y personas ajenas.
-5. Guardar la imagen fuera de la app, en la custodia institucional restringida acordada. Usar una referencia vinculada al código del objeto, sin nombres ni números de identificación en el archivo.
-6. Consignar receptor, comprobación de propiedad, tipo de identificación y referencia de evidencia externa. Confirmar esos pasos y registrar la entrega: sale del catálogo y conserva fecha, responsable e historial.
+5. Seleccionar entre una y tres imágenes desde la app. Revisar la vista previa ampliada y confirmar la entrega; el servicio las guarda en Drive institucional privado.
+6. Consignar receptor, comprobación de propiedad y tipo de identificación. Confirmar esos pasos y registrar la entrega: cambia a Entregado en el catálogo, con fecha, responsable y fotografías exclusivamente internos.
 
-La herramienta no captura imágenes ni integra Drive. Registrar una referencia no comprueba técnicamente que la foto exista: es una constancia del operador. UCSD debe definir permisos, plazo de conservación, atención a solicitudes y situaciones excepcionales antes de utilizar fotos reales. La propuesta de 90 días para objetos no define el plazo de conservación de fotografías.
+El servicio comprueba la subida antes de confirmar la entrega y vincula su constancia privada al objeto. Las entregas antiguas conservan referencias externas sin exigir fotografías retroactivas. UCSD debe definir permisos, plazo de conservación, atención a solicitudes y situaciones excepcionales antes de utilizar fotos reales. La propuesta de 90 días para objetos no define el plazo de conservación de fotografías.
 
-La ausencia de coincidencias significa que no hay un registro disponible que coincida; no permite asegurar que nadie encontró el objeto. Se orienta al estudiante a consultar al decanato.
+La ausencia de coincidencias significa que no hay un registro público que coincida; no permite asegurar que nadie encontró el objeto. Se orienta al estudiante a consultar al decanato.
 
 ## Custodia, entrega y archivo
 
 - Guardar cada objeto en una ubicación interna identificada y mantener actualizado su registro.
 - Registrar la devolución después de verificar propiedad: constancia mínima del receptor, evidencia de validación, fecha y personal responsable. En la demo, todos esos datos deben ser ficticios.
-- Cambiar a **entregado** y retirar del catálogo disponible, conservando la trazabilidad interna.
-- Usar **archivado** para retirar un registro de circulación por una razón documentada. Archivar no equivale a devolver el objeto ni autoriza desecharlo.
+- Cambiar a **entregado**: deja de contar como disponible, pero su ficha permanece consultable para posibles reclamaciones. No publicar quién lo recibió ni sus fotografías.
+- Usar **archivado** para cerrar un registro interno por una razón documentada. Si tuvo entrega, su ficha pública conserva la etiqueta Entregado. Archivar no equivale a devolver el objeto ni autoriza desecharlo.
 - Mantener historial de registro, correcciones y cambios de estado. La demo ilustra esa trazabilidad; su almacenamiento local es modificable y no constituye una auditoría confiable de producción. La integración Firebase preparada conserva historial e identidad de cada operación; necesita verificaciones reales antes de operar.
 
 ## Propuesta de revisión a 90 días y destino final

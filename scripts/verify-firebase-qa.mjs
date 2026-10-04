@@ -74,6 +74,10 @@ try {
   item = updateItem(item, receivedDraft, accounts.decanato.email)
   await persist(item)
   console.log('Recepcion remota aprobada.')
+  const publicationCandidate = publishItem(item, accounts.decanato.email)
+  await denied(() => persist({ ...publicationCandidate, privateDetails: 'Cambio reservado durante publicación QA' }), 'Publicar no modifica las características reservadas')
+  // persist() rebuilds matching public/private indexes, so this is a coherent but forbidden public-field change.
+  await denied(() => persist({ ...publicationCandidate, title: 'Título modificado al publicar QA' }), 'Publicar no modifica título ni índices públicos aunque la proyección coincida')
   item = publishItem(item, accounts.decanato.email)
   await persist(item)
   console.log('Publicacion remota aprobada.')
@@ -100,8 +104,14 @@ try {
   assert.deepEqual(publicRecord.data(), { ...projectPublicItems([item])[0], ...buildPublicIndex(projectPublicItems([item])[0]) })
   assert.equal('privateDetails' in publicRecord.data(), false)
   assert.equal('custodyLocation' in publicRecord.data(), false)
+  assert.equal('recipient' in publicRecord.data(), false)
+  assert.equal('evidenceId' in publicRecord.data(), false)
   await denied(() => getDoc(doc(db, 'privateItems', item.id)), 'Visitante no consulta custodia')
   await login('decanato')
+  for (const extra of [{ recipient: 'Receptor privado QA' }, { evidenceId: 'evidencia-inventada-para-qa-0001' }, { custodyLocation: 'Custodia ficticia QA' }]) {
+    await denied(() => setDoc(doc(db, 'publicItems', item.id), { ...publicRecord.data(), ...extra }), `La proyección pública rechaza ${Object.keys(extra)[0]}`)
+  }
+  await denied(() => setDoc(doc(db, 'publicItems', item.id), { ...publicRecord.data(), status: 'entregado' }), 'No se publica entregado mientras el objeto privado siga disponible')
   const malformedDelivery = { ...deliverItem(item, { recipient: 'Estudiante ficticio', proof: 'Marca ficticia comprobada.', identityType: 'carnet_estudiante', photoEvidenceReference: 'QA-EVIDENCIA-EXTERNA-FICTICIA' }, accounts.decanato.email) }
   delete malformedDelivery.delivery.identityType
   delete malformedDelivery.delivery.photoEvidenceReference
@@ -116,12 +126,19 @@ try {
     item = validDelivery(accounts.decanato.email)
     await persist(item, true)
     console.log('Entrega externa histórica remota aprobada.')
-    assert.equal((await getDoc(doc(db, 'publicItems', item.id))).exists(), false)
+    assert.equal((await getDocFromServer(doc(db, 'publicItems', item.id))).data()?.status, 'entregado')
   }
   item = archiveItem(item, accounts.decanato.email)
   await persist(item, process.env.UCSD_EVIDENCE_ENABLED === 'true')
   console.log('Archivo remoto aprobado.')
   assert.equal((await getDoc(doc(db, 'privateItems', item.id))).data()?.status, 'archivado')
+  const archivedProjection = (await getDocFromServer(doc(db, 'publicItems', item.id))).data()
+  if (item.delivery) {
+    const projected = projectPublicItems([item])[0]
+    assert.deepEqual(archivedProjection, { ...projected, ...buildPublicIndex(projected) })
+    assert.equal(archivedProjection.status, 'entregado')
+    await denied(() => deleteDoc(doc(db, 'publicItems', item.id)), 'El archivo conserva la ficha pública de una entrega')
+  } else assert.equal(archivedProjection, undefined)
   await login('admin')
   assert.ok((await getDocs(query(collection(db, 'access'), limit(500)))).size >= 3)
   assert.ok((await getCountFromServer(query(collection(db, 'privateItems')))).data().count >= 1)

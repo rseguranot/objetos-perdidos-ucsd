@@ -21,7 +21,10 @@ test('nueva entrega exige identificación verificada y referencia fotográfica e
     assert.equal(delivered.delivery?.identityType, identityType)
     assert.equal(delivered.delivery?.photoEvidenceReference, 'UCSD-EVIDENCIA-FICTICIA-001')
     assert.equal(delivered.history.length, original.history.length + 1)
-    assert.deepEqual(projectPublicItems([delivered]), [])
+    const publicItem = projectPublicItems([delivered])[0]
+    assert.equal(publicItem.status, 'entregado')
+    assert.equal('delivery' in publicItem, false)
+    assert.equal('photoEvidenceReference' in publicItem, false)
     assert.doesNotThrow(() => authorizeItemChange(custodian, original, delivered))
     assert.deepEqual(parseItems([delivered])[0]?.delivery, delivered.delivery)
     assert.deepEqual(archiveItem(delivered, actor).delivery, delivered.delivery)

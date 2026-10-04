@@ -24,6 +24,11 @@ import ArchiveOutlined from '@mui/icons-material/ArchiveOutlined'
 import HistoryRounded from '@mui/icons-material/HistoryRounded'
 import SearchRounded from '@mui/icons-material/SearchRounded'
 import InputAdornment from '@mui/material/InputAdornment'
+import IconButton from '@mui/material/IconButton'
+import CloseRounded from '@mui/icons-material/CloseRounded'
+import SearchableFilter from './SearchableFilter'
+import EvidenceViewer from './EvidenceViewer'
+import EvidencePanel, { type EvidenceApi } from './EvidencePanel'
 import CategoryIcon from './CategoryIcon'
 import DateRangeFilter from './DateRangeFilter'
 import ReportDownload from './ReportDownload'
@@ -138,11 +143,14 @@ interface AdminPanelProps {
   reportYear?: number
   onReportYearChange?: (year: number) => void
   refreshToken?: number
+  evidenceApi?: EvidenceApi
   onDelivery?: (item: LostItem, delivery: DeliveryInput, photos: PreparedPhoto[], operationId: string) => Promise<void>
 }
 
-export default function AdminPanel({ items, session, demo, onCommit, blocked, loadPage, loadItem, onItemsLoaded, metrics, reportYear, onReportYearChange, refreshToken = 0, onDelivery }: AdminPanelProps) {
+export default function AdminPanel({ items, session, demo, onCommit, blocked, loadPage, loadItem, onItemsLoaded, metrics, reportYear, onReportYearChange, refreshToken = 0, onDelivery, evidenceApi }: AdminPanelProps) {
   const [query, setQuery] = useState('')
+  const [viewingEvidence, setViewingEvidence] = useState<{ id: string; title: string } | null>(null)
+  const [consultingDeliveries, setConsultingDeliveries] = useState(false)
   const [remoteQuery, setRemoteQuery] = useState('')
   const [status, setStatus] = useState('')
   const [from, setFrom] = useState('')
@@ -257,14 +265,15 @@ export default function AdminPanel({ items, session, demo, onCommit, blocked, lo
       <button className={`admin-stat ${destination === 'remision_documentos' ? 'selected' : ''}`} aria-pressed={destination === 'remision_documentos'} onClick={() => destinationFilter('remision_documentos')}><span>Documentos remitidos</span><strong>{loadPage && !metrics ? '—' : remittedCount}</strong><span>A la institución emisora</span></button>
     </div></div>}
     {error && <Alert severity="error" onClose={() => setError('')} className="form-alert">{error}</Alert>}
+    {session.role === 'registro' && evidenceApi && <Button variant="outlined" sx={{ mb: 2 }} onClick={() => setConsultingDeliveries(true)}>Consultar entregas</Button>}
     <div className="admin-filters">
-      <div className="admin-filter-search"><TextField fullWidth label="Buscar en el registro" placeholder="Objeto, código o descripción" value={query} onChange={event => setQuery(event.target.value)} slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRounded /></InputAdornment> } }} /></div>
+      <div className="admin-filter-search"><TextField fullWidth label="Buscar en el registro" placeholder="Objeto, código o descripción" value={query} onChange={event => setQuery(event.target.value)} slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRounded /></InputAdornment>, endAdornment: query ? <InputAdornment position="end"><IconButton size="small" aria-label="Borrar búsqueda" onClick={() => setQuery('')} edge="end"><CloseRounded fontSize="small" /></IconButton></InputAdornment> : undefined } }} /></div>
       <div className="admin-filter-grid">
-        <TextField select label="Categoría" value={category} onChange={event => { setCategory(event.target.value as Category | ''); setItemType('') }}><MenuItem value="">Todas las categorías</MenuItem>{Object.entries(CATEGORY_LABELS).map(([key, label]) => <MenuItem key={key} value={key}>{label}</MenuItem>)}</TextField>
-        <TextField select label="Tipo de objeto" value={itemType} disabled={!category} onChange={event => setItemType(event.target.value)}><MenuItem value="">Todos los tipos</MenuItem>{category && typesForCategory(category).map(type => <MenuItem key={type} value={type}>{TYPE_LABELS[type]}</MenuItem>)}</TextField>
-        <TextField select label="Estado" value={status} onChange={event => setStatus(event.target.value)}><MenuItem value="">Todos los estados</MenuItem>{Object.entries(STATUS_LABELS).map(([key, label]) => <MenuItem key={key} value={key}>{label}</MenuItem>)}</TextField>
-        {receiveAllowed && <TextField select label="Seguimiento / destino" value={destination} onChange={event => setDestination(event.target.value as typeof destination)}><MenuItem value="">Todos</MenuItem><MenuItem value="pendiente90">90 días · pendiente de revisión</MenuItem><MenuItem value="donacion">Donación registrada</MenuItem><MenuItem value="remision_documentos">Remisión a su emisor</MenuItem></TextField>}
-        <TextField select className="admin-filter-building" label="Edificio o lugar" value={building} onChange={e => setBuilding(e.target.value)}><MenuItem value="">Todos los edificios y lugares</MenuItem>{CAMPUS_NAMES.map(name => <MenuItem key={name} value={name}>{name}</MenuItem>)}<MenuItem value={LEGACY_LOCATION}>Ubicación sin edificio identificado</MenuItem></TextField>
+        <SearchableFilter label="Categoría" value={category} options={Object.entries(CATEGORY_LABELS).map(([value, label]) => ({ value, label }))} onChange={value => { setCategory(value as Category | ''); setItemType('') }} />
+        <SearchableFilter label="Tipo de objeto" value={itemType} disabled={!category} options={category ? typesForCategory(category).map(value => ({ value, label: TYPE_LABELS[value] })) : []} onChange={setItemType} />
+        <SearchableFilter label="Estado" value={status} options={Object.entries(STATUS_LABELS).map(([value, label]) => ({ value, label }))} onChange={setStatus} />
+        {receiveAllowed && <SearchableFilter label="Seguimiento / destino" value={destination} options={[{ value: 'pendiente90', label: '90 días · pendiente de revisión' }, { value: 'donacion', label: 'Donación registrada' }, { value: 'remision_documentos', label: 'Remisión a su emisor' }]} onChange={value => setDestination(value as typeof destination)} />}
+        <SearchableFilter className="admin-filter-building" label="Edificio o lugar" value={building} options={[...CAMPUS_NAMES.map(value => ({ value, label: value })), { value: LEGACY_LOCATION, label: 'Ubicación sin edificio identificado' }]} onChange={setBuilding} />
       </div>
       <div className="admin-filter-dates"><DateRangeFilter from={from} to={to} onChange={(nextFrom, nextTo) => { setFrom(nextFrom); setTo(nextTo) }} /></div>
     {invalidDates && <Alert severity="warning" className="date-warning">La fecha inicial debe ser anterior o igual a la fecha final.</Alert>}
@@ -301,9 +310,11 @@ export default function AdminPanel({ items, session, demo, onCommit, blocked, lo
     <Dialog open={Boolean(archiving)} onClose={() => !busy && setArchiving(null)} aria-labelledby="archive-title"><DialogTitle id="archive-title">¿Archivar este registro?</DialogTitle><DialogContent><p>{archiving?.title} · {archiving?.code}</p><p>Dejará de aparecer en el catálogo. Los datos y el historial se conservarán en el panel interno. Archivar no registra una donación.</p></DialogContent><DialogActions><Button disabled={busy} onClick={() => setArchiving(null)}>Cancelar</Button><Button variant="contained" disabled={busy || blocked} onClick={() => { void action(async () => { if (archiving) { await transition(archiveItem(archiving, session.email), 'Registro archivado.'); setArchiving(null) } }) }}>Confirmar archivo</Button></DialogActions></Dialog>
     <Dialog open={Boolean(inspecting)} onClose={() => setInspecting(null)} fullWidth maxWidth="sm" aria-labelledby="history-title"><DialogTitle id="history-title">Registro interno e historial</DialogTitle><DialogContent>{inspecting && <>
       <h3>{inspecting.title} · {inspecting.code}</h3><dl className="detail-fields"><div><dt>Recepción confirmada</dt><dd>{inspecting.received ? 'Sí' : 'No'}</dd></div><div><dt>Fecha de recepción</dt><dd>{inspecting.receivedDate || 'Pendiente'}</dd></div><div><dt>Ubicación de custodia registrada</dt><dd>{inspecting.custodyLocation || 'Pendiente'}</dd></div><div><dt>Características reservadas</dt><dd>{inspecting.privateDetails || 'Sin detalles adicionales'}</dd></div>
-      {inspecting.delivery && <><div><dt>{demo ? 'Receptor ficticio' : 'Receptor'}</dt><dd>{inspecting.delivery.recipient}</dd></div><div><dt>Prueba de propiedad registrada</dt><dd>{inspecting.delivery.proof}</dd></div><div><dt>Identificación verificada</dt><dd>{inspecting.delivery.identityType === 'carnet_estudiante' ? 'Carné de estudiante' : inspecting.delivery.identityType === 'documento_identidad' ? 'Documento de identidad' : 'Registro anterior · sin constancia del tipo'}</dd></div><div><dt>Fotografías de entrega</dt><dd>{inspecting.delivery.evidenceId ? 'Disponible en Evidencias' : inspecting.delivery.photoEvidenceReference ?? 'Registro anterior · sin referencia'}</dd></div></>}
+      {inspecting.delivery && <><div><dt>{demo ? 'Receptor ficticio' : 'Receptor'}</dt><dd>{inspecting.delivery.recipient}</dd></div><div><dt>Prueba de propiedad registrada</dt><dd>{inspecting.delivery.proof}</dd></div><div><dt>Identificación verificada</dt><dd>{inspecting.delivery.identityType === 'carnet_estudiante' ? 'Carné de estudiante' : inspecting.delivery.identityType === 'documento_identidad' ? 'Documento de identidad' : 'Registro anterior · sin constancia del tipo'}</dd></div><div><dt>Fotografías de entrega</dt><dd>{inspecting.delivery.evidenceId ? evidenceApi ? <Button size="small" onClick={() => setViewingEvidence({ id: inspecting.delivery!.evidenceId!, title: `${inspecting.code} · ${inspecting.title}` })}>Ver fotos</Button> : 'Fotos no disponibles en este entorno' : inspecting.delivery.photoEvidenceReference ?? 'Registro anterior · sin referencia'}</dd></div></>}
       {inspecting.disposition && <><div><dt>Destino final</dt><dd>{inspecting.disposition.kind === 'donacion' ? 'Donación' : 'Remisión a institución emisora'}</dd></div><div><dt>Organización / institución receptora</dt><dd>{inspecting.disposition.recipient}</dd></div><div><dt>Constancia del traslado</dt><dd>{inspecting.disposition.reference}</dd></div><div><dt>Fecha del destino</dt><dd>{new Date(inspecting.disposition.completedAt).toLocaleString('es-DO', { timeZone: 'America/Santo_Domingo' })}</dd></div></>}
       </dl><ol className="history-list">{inspecting.history.toReversed().map(entry => <li key={entry.id}><strong>{entry.action}</strong><span>{entry.actor}</span><time dateTime={entry.at}>{new Date(entry.at).toLocaleString('es-DO')}</time></li>)}</ol>
     </>}</DialogContent><DialogActions><Button onClick={() => setInspecting(null)}>Cerrar</Button></DialogActions></Dialog>
+    {viewingEvidence && evidenceApi && <EvidenceViewer key={viewingEvidence.id} evidenceId={viewingEvidence.id} title={viewingEvidence.title} api={evidenceApi} onClose={() => setViewingEvidence(null)} />}
+    {consultingDeliveries && evidenceApi && <Dialog open onClose={() => setConsultingDeliveries(false)} fullWidth maxWidth="md" aria-label="Consultar entregas"><DialogContent><EvidencePanel sessionKey={session.email} api={evidenceApi} /></DialogContent><DialogActions><Button onClick={() => setConsultingDeliveries(false)}>Cerrar</Button></DialogActions></Dialog>}
   </section>
 }

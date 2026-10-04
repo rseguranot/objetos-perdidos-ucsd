@@ -18,10 +18,10 @@ const actor = 'Responsable ficticio'
 
 test('el catálogo devuelve únicamente una proyección pública explícita', () => {
   const publicItems = filterPublicItems(SEED_ITEMS, filters)
-  assert.equal(publicItems.length, 8)
+  assert.equal(publicItems.length, 9)
   for (const item of publicItems) {
     assert.deepEqual(Object.keys(item).sort(), ['id', 'code', 'title', 'category', 'itemType', 'description', 'foundDate', 'foundLocation', 'status'].sort())
-    assert.equal(item.status, 'disponible')
+    assert.ok(['disponible', 'entregado'].includes(item.status))
   }
   assert.equal(filterPublicItems(SEED_ITEMS, { ...filters, query: 'pegatina' }).length, 0)
 })
@@ -53,18 +53,18 @@ test('un disponible sin recepción válida tampoco se filtra como público', () 
   assert.equal(filterPublicItems([{ ...SEED_ITEMS[0]!, receivedDate: '2026-09-27' }], filters).length, 0)
 })
 
-test('entrega requiere receptor y prueba; entrega y archivo retiran la ficha pública', () => {
+test('entrega requiere receptor y prueba; entrega y archivo mantienen una ficha pública sin receptor', () => {
   const original = SEED_ITEMS[0]!
   assert.throws(() => deliverItem(original, { recipient: '', proof: 'detalle' }, actor), /receptor/)
   assert.throws(() => deliverItem(original, { recipient: 'Persona', proof: '' }, actor), /propiedad/)
   const delivered = deliverItem(original, { recipient: 'Persona ficticia', proof: 'Describió la marca', identityType: 'carnet_estudiante', photoEvidenceReference: 'ACTA-FICTICIA-001' }, actor)
   assert.equal(delivered.delivery?.recipient, 'Persona ficticia')
-  assert.equal(filterPublicItems([delivered], filters).length, 0)
+  assert.equal(filterPublicItems([delivered], filters)[0]?.status, 'entregado')
   assert.equal(original.status, 'disponible')
   assert.throws(() => deliverItem(delivered, { recipient: 'Persona', proof: 'Marca' }, actor), /disponible/)
   const archived = archiveItem(delivered, actor)
   assert.deepEqual(archived.delivery, delivered.delivery)
-  assert.equal(filterPublicItems([archived], filters).length, 0)
+  assert.equal(filterPublicItems([archived], filters)[0]?.status, 'entregado')
   assert.throws(() => archiveItem(archived, actor), /ya está archivado/)
 })
 
@@ -194,4 +194,17 @@ test('almacenamiento conserva registros y restablece una copia independiente de 
     if (original) Object.defineProperty(globalThis, 'localStorage', original)
     else Reflect.deleteProperty(globalThis, 'localStorage')
   }
+})
+
+
+test('archivo sin entrega, borrador y disposición no aparecen; entrega archivada sigue buscando por código', () => {
+  const original = SEED_ITEMS[0]!
+  const delivered = deliverItem(original, { recipient: 'PrivadoIntransferible', proof: 'DetalleSoloInterno', identityType: 'carnet_estudiante', photoEvidenceReference: 'ACTA-INTERNA' }, actor)
+  const archived = archiveItem(delivered, actor)
+  const items = [archived, archiveItem(SEED_ITEMS[1]!, actor), { ...original, status: 'borrador' as const }, { ...archived, disposition: { kind: 'donacion' as const, recipient: 'Interno', reference: 'Reservado', completedAt: '2026-10-03T12:00:00Z' } }]
+  const result = filterPublicItems(items, { ...filters, query: original.code })
+  assert.deepEqual(result, projectPublicItems([archived]))
+  assert.equal(result.length, 1)
+  assert.equal(result[0].status, 'entregado')
+  for (const query of ['PrivadoIntransferible', 'DetalleSoloInterno', 'ACTA-INTERNA']) assert.equal(filterPublicItems(items, { ...filters, query }).length, 0)
 })

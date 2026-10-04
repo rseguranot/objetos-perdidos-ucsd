@@ -112,3 +112,25 @@ Las cinco lecturas anónimas institucionales de aquella versión se repitieron y
 Ambos proyectos permanecen Spark sin facturación vinculada. El objetivo es US$0 bajo las cuotas; alcanzarlas puede interrumpir servicio. No usar App Hosting, Cloud Functions, SMS ni Cloud Storage como parte de esta implementación. La evidencia fotográfica sigue bajo custodia externa manual. [Planes Firebase](https://firebase.google.com/docs/projects/billing/firebase-pricing-plans), [cuotas Firestore](https://firebase.google.com/docs/firestore/quotas), [alojamiento y evidencia](alojamiento-y-evidencia.md).
 
 Antes de operar con objetos reales, evaluar contraseña institucional y verificación real de correo, verificar los casos adicionales necesarios y acordar con UCSD responsables, contacto, protocolo y custodia externa. El circuito QA no demuestra por sí mismo operaciones con Google institucional en el piloto. No modificar datos del piloto ni permisos superiores como efecto secundario de mantener QA.
+
+## Recuperar fichas públicas de entregas históricas
+
+El cambio de catálogo conserva como Entregado la ficha de un objeto con entrega, aunque internamente se haya archivado. Para las entregas anteriores que ya no tienen ficha pública, utilizar `scripts/backfill-public-deliveries.mjs`. No altera objetos privados, estados, entregas, métricas históricas ni fotografías. Construye las fichas con `projectPublicItems` y `buildPublicIndex`, sin copiar campos privados.
+
+La ejecución requiere OAuth administrativo local en `UCSD_IMPORT_ACCESS_TOKEN` y un proyecto explícito. El token se mantiene en el entorno: no guardarlo en Git, archivos o historial de comandos. Sin `--apply`, lee y muestra el número de cambios previstos, sin escribir documentos ni crear un respaldo:
+
+```powershell
+node scripts/backfill-public-deliveries.mjs --project=ucsd-objetos-perdidos-pruebas
+```
+
+Tras revisar el resultado, la aplicación se solicita explícitamente:
+
+```powershell
+node scripts/backfill-public-deliveries.mjs --project=ucsd-objetos-perdidos-pruebas --apply
+```
+
+Para el piloto cambiar únicamente el proyecto a `ucsd-objetos-perdidos`, después de validar QA. No se ejecuta automáticamente al compilar o desplegar. Antes de escribir, verifica `billingEnabled: false` y guarda un respaldo local exclusivo en `evidence/public-deliveries-backup-<proyecto>-<timestamp>.json`, excluido de Git. Ese respaldo contiene datos internos pertinentes y debe custodiarse.
+
+El script rechaza registros sin marca ficticia, inspecciona hasta 10.000 objetos y admite hasta 200 fichas por aplicación. Su transacción vuelve a leer los registros y sus fichas, compara versiones y usa precondiciones para no sobrescribir cambios concurrentes. Si encuentra un conflicto, repetir la simulación. Es idempotente: una ficha ya idéntica no se vuelve a escribir; después de aplicarlo, una nueva simulación debe indicar cero cambios. No habilita facturación, no migra fotos ni elimina publicaciones existentes.
+
+Publicar primero el servicio y las reglas compatibles con la proyección de Entregado, aplicar la preparación en QA y comprobar lectura anónima sin campos privados, historial y visor. La preparación de producción con datos reales requiere revisión distinta: este script está acotado a ejemplos ficticios.

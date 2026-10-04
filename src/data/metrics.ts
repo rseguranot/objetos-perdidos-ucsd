@@ -103,8 +103,8 @@ async function count(database: Firestore, metric: MetricQuery): Promise<number> 
 }
 
 export async function loadPublicAvailableCount(database: Firestore): Promise<number> {
-  // Public rules permit this aggregate; the collection contains available projections only.
-  return (await getCountFromServer(query(collection(database, 'publicItems')))).data().count
+  // Delivered projections remain searchable, but the cover counts only available objects.
+  return (await getCountFromServer(query(collection(database, 'publicItems'), where('status', '==', 'disponible')))).data().count
 }
 
 export async function loadStaffMetrics(database: Firestore, session: Session, year: number, now = new Date()): Promise<StaffMetrics> {
