@@ -23,3 +23,11 @@ Se simuló, respaldó y aplicó primero en QA (55 registros internos y 25 públi
 - La comprobación de versiones identificó una pestaña con el bundle anterior; al recargar recibió la compilación publicada y se repitió la prueba de cierre y reapertura.
 
 Evidencia local: `evidence/guia-qa-reabierta.png`, `evidence/navegacion-sin-sesion.png`, `evidence/guia-piloto-reabierta.png`, respaldos y registros de pruebas/publicación.
+
+## Etiquetas de custodia — 5 de octubre de 2026
+
+Los ejemplos nuevos usan `Decanato - Archivo caja N`. Se respaldaron y actualizaron 69 registros del piloto que tenían exactamente `Custodia ficticia · caja N`, conservando el número de caja y recalculando únicamente el índice privado de búsqueda. No se modificaron documentos públicos. QA no tenía etiquetas con ese patrón.
+
+Script: `scripts/clean-demo-custody.mjs`, mismas opciones y token administrativo que el script de limpieza de textos; simula por defecto y requiere `--apply` para escribir. Usa precondiciones de versión y máscaras de campos.
+
+La verificación por API comparó los 69 registros con su respaldo: etiqueta correcta y todos los campos ajenos a custodia/índice idénticos. La simulación posterior encontró cero cambios pendientes. Pasaron 117 pruebas, lint y compilaciones QA/piloto. Se publicaron ambas versiones de Hosting.
