@@ -31,3 +31,5 @@ Los ejemplos nuevos usan `Decanato - Archivo caja N`. Se respaldaron y actualiza
 Script: `scripts/clean-demo-custody.mjs`, mismas opciones y token administrativo que el script de limpieza de textos; simula por defecto y requiere `--apply` para escribir. Usa precondiciones de versión y máscaras de campos.
 
 La verificación por API comparó los 69 registros con su respaldo: etiqueta correcta y todos los campos ajenos a custodia/índice idénticos. La simulación posterior encontró cero cambios pendientes. Pasaron 117 pruebas, lint y compilaciones QA/piloto. Se publicaron ambas versiones de Hosting.
+
+Revisión completa posterior: 75 objetos comprobados. Los 69 normalizados se distribuyen en cajas 1–10. Se corrigió además la etiqueta exacta `Prueba ficticia piloto` del objeto de fotografías a `Decanato - Archivo caja 11`, con simulación, respaldo y precondición de versión. Quedan 70 registros con caja asignada y cinco borradores sin recepción, cuya custodia vacía se conserva. La segunda simulación encontró cero cambios pendientes. Este ajuste afecta datos y el script administrativo; no requiere otra publicación de Hosting.

@@ -3,5 +3,6 @@ export function cleanDemoObjectText(text: string): string {
   return text.replace(/\bObjeto ficticio\.\s*/gi, '').replace(/\bfictici[oa]s?\b/gi, '').replace(/[ \t]{2,}/g, ' ').replace(/ +([.,;:])/g, '$1').trim()
 }
 export function cleanDemoCustody(text: string): string {
+  if (text === 'Prueba ficticia piloto') return 'Decanato - Archivo caja 11'
   return text.replace(/^Custodia ficticia\s*[·-]\s*caja\s+(\d+)$/i, 'Decanato - Archivo caja $1')
 }
